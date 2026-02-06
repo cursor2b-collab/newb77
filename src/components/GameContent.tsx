@@ -213,54 +213,54 @@ export function GameContent() {
     'vs20fruitsw': 'https://ik.imagekit.io/gpbvknoim/fd4.avif',     // 甜入心扉
   };
 
-  // 获取横幅游戏封面 - 已注释
+  // 获取横幅游戏封面 - 已注释（新游戏API调用已全部注释掉）
   // useEffect(() => {
   //   const fetchBannerGames = async () => {
   //     try {
   //       const gameApiLanguage = getGameApiLanguage();
   //       const gamesResponse = await newGameApiService.getGamesList('slot-pragmatic', gameApiLanguage);
-        let games: any[] = [];
-        
-        if (Array.isArray(gamesResponse)) {
-          games = gamesResponse;
-        } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
-          games = gamesResponse.message;
-        } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
-          games = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
-        }
-
-        // 查找指定的三个游戏
-        const bannerGameCodes = ['vs20sugarrushx', 'vs243lionsgold', 'vs20fruitsw'];
-        const bannerGameNames = ['极速糖果1000', '5金狮', '甜入心扉'];
-        
-        const foundGames = bannerGameCodes.map((code, index) => {
-          const game = games.find((g: any) => g.gameCode === code);
-          // 优先使用自定义图片，如果没有则使用接口返回的图片
-          const customImage = bannerGamesCustomImages[code];
-          const apiImage = game?.thumbnail || game?.imageUrl || '';
-          return {
-            name: bannerGameNames[index],
-            code: code,
-            thumbnail: customImage || apiImage
-          };
-        });
-
-        setBannerGames(foundGames);
-      } catch (error) {
-        console.error('获取横幅游戏封面失败:', error);
-        // 设置默认值，优先使用自定义图片
-        const bannerGameCodes = ['vs20sugarrushx', 'vs243lionsgold', 'vs20fruitsw'];
-        const bannerGameNames = ['极速糖果1000', '5金狮', '甜入心扉'];
-        setBannerGames(bannerGameCodes.map((code, index) => ({
-          name: bannerGameNames[index],
-          code: code,
-          thumbnail: bannerGamesCustomImages[code] || ''
-        })));
-      }
-    };
-
-    fetchBannerGames();
-  }, []); */
+  //       let games: any[] = [];
+  //       
+  //       if (Array.isArray(gamesResponse)) {
+  //         games = gamesResponse;
+  //       } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
+  //         games = gamesResponse.message;
+  //       } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
+  //         games = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
+  //       }
+  //
+  //       // 查找指定的三个游戏
+  //       const bannerGameCodes = ['vs20sugarrushx', 'vs243lionsgold', 'vs20fruitsw'];
+  //       const bannerGameNames = ['极速糖果1000', '5金狮', '甜入心扉'];
+  //       
+  //       const foundGames = bannerGameCodes.map((code, index) => {
+  //         const game = games.find((g: any) => g.gameCode === code);
+  //         // 优先使用自定义图片，如果没有则使用接口返回的图片
+  //         const customImage = bannerGamesCustomImages[code];
+  //         const apiImage = game?.thumbnail || game?.imageUrl || '';
+  //         return {
+  //           name: bannerGameNames[index],
+  //           code: code,
+  //           thumbnail: customImage || apiImage
+  //         };
+  //       });
+  //
+  //       setBannerGames(foundGames);
+  //     } catch (error) {
+  //       console.error('获取横幅游戏封面失败:', error);
+  //       // 设置默认值，优先使用自定义图片
+  //       const bannerGameCodes = ['vs20sugarrushx', 'vs243lionsgold', 'vs20fruitsw'];
+  //       const bannerGameNames = ['极速糖果1000', '5金狮', '甜入心扉'];
+  //       setBannerGames(bannerGameCodes.map((code, index) => ({
+  //         name: bannerGameNames[index],
+  //         code: code,
+  //         thumbnail: bannerGamesCustomImages[code] || ''
+  //       })));
+  //     }
+  //   };
+  //
+  //   fetchBannerGames();
+  // }, []);
 
   // 获取捕鱼游戏数据 - 已注释（新游戏API调用已全部注释掉）
   // useEffect(() => {
@@ -345,6 +345,42 @@ export function GameContent() {
   //   
   //   fetchFishingGames();
   // }, []);
+
+  // 从 game_lists 表获取捕鱼游戏数据（JDB 平台的捕鱼游戏）
+  useEffect(() => {
+    if (gamesLoading) {
+      setFishingGamesLoading(true);
+      return;
+    }
+
+    try {
+      // 筛选 JDB 平台的捕鱼游戏（gameCode: 7001, 7002, 7003, 7004, 7005, 7006）
+      const fishingGameCodes = ['7001', '7002', '7003', '7004', '7005', '7006'];
+      const jdbFishingGames = gamingList.filter(game => 
+        (game.platform_name || '').toUpperCase() === 'JDB' && 
+        game.game_type === 3 &&
+        fishingGameCodes.includes(game.game_code || '')
+      );
+
+      // 转换为组件需要的格式
+      const fishingGamesData = jdbFishingGames.map((game) => ({
+        id: `${game.platform_name}-${game.game_code}`,
+        name: game.name || '',
+        thumbnail: game.cover || '',
+        vendorCode: '', // 旧接口不需要 vendorCode
+        gameCode: game.game_code || '',
+        provider: game.platform_name || 'JDB'
+      }));
+
+      setFishingGames(fishingGamesData);
+      console.log('✅ 从 game_lists 表获取到捕鱼游戏:', fishingGamesData.length, '个');
+    } catch (error) {
+      console.error('❌ 处理捕鱼游戏列表失败:', error);
+      setFishingGames([]);
+    } finally {
+      setFishingGamesLoading(false);
+    }
+  }, [gamingList, gamesLoading]);
 
   // 格式化显示的游戏数据
   const displayGames = gamesList.length > 0 
@@ -716,11 +752,38 @@ export function GameContent() {
         .fishing-game-item {
           position: relative;
           overflow: hidden;
-          border-radius: 8px;
+          border-radius: 12px;
           cursor: pointer;
           transition: transform 0.2s;
           width: 120px;
           flex-shrink: 0;
+        }
+
+        /* 移动端和PC端分别显示 */
+        .fishing-games-mobile {
+          display: block;
+        }
+
+        .fishing-games-desktop {
+          display: none;
+        }
+
+        /* PC端样式：使用网格布局 */
+        @media (min-width: 768px) {
+          .fishing-games-mobile {
+            display: none; /* PC端隐藏 Swiper */
+          }
+
+          .fishing-games-desktop {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+          }
+
+          .fishing-games-nav {
+            display: none; /* PC端隐藏导航按钮 */
+          }
         }
 
         .fishing-game-item:active {
@@ -730,7 +793,7 @@ export function GameContent() {
         .fishing-game-cover-wrapper {
           width: 100%;
           position: relative;
-          border-radius: 8px;
+          border-radius: 12px;
           min-height: 90px;
           height: 90px;
           overflow: hidden;
@@ -746,7 +809,7 @@ export function GameContent() {
           display: block;
           object-fit: contain;
           object-position: center;
-          border-radius: 8px;
+          border-radius: 12px;
         }
 
         .fishing-game-provider {
@@ -921,18 +984,51 @@ export function GameContent() {
           {fishingGamesLoading ? (
             <div className="fishing-games-loading">加载中...</div>
           ) : fishingGames.length > 0 ? (
-            <Swiper
-              modules={[Navigation]}
-              spaceBetween={9}
-              slidesPerView="auto"
-              onSwiper={(swiper) => {
-                fishingSwiperRef.current = swiper;
-              }}
-              className="fishing-games-swiper"
-            >
-              {fishingGames.map((game) => (
-                <SwiperSlide key={game.id} className="fishing-game-slide">
+            <>
+              {/* 移动端：使用 Swiper */}
+              <div className="fishing-games-mobile">
+                <Swiper
+                  modules={[Navigation]}
+                  spaceBetween={9}
+                  slidesPerView="auto"
+                  onSwiper={(swiper) => {
+                    fishingSwiperRef.current = swiper;
+                  }}
+                  className="fishing-games-swiper"
+                >
+                  {fishingGames.map((game) => (
+                    <SwiperSlide key={game.id} className="fishing-game-slide">
+                      <div 
+                        className="fishing-game-item"
+                        onClick={() => {
+                          // 使用旧接口启动捕鱼游戏
+                          openGame(game.provider || 'JDB', 3, game.gameCode);
+                        }}
+                      >
+                        <div className="fishing-game-cover-wrapper">
+                          <img 
+                            src={game.thumbnail || '/images/default-game.png'} 
+                            alt={game.name}
+                            className="fishing-game-picture"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/images/default-game.png';
+                            }}
+                          />
+                          <div className="fishing-game-provider">{game.provider}</div>
+                        </div>
+                        {game.name && (
+                          <div className="fishing-game-name">{game.name}</div>
+                        )}
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </div>
+              {/* PC端：使用网格布局 */}
+              <div className="fishing-games-desktop">
+                {fishingGames.map((game) => (
                   <div 
+                    key={game.id}
                     className="fishing-game-item"
                     onClick={() => {
                       // 使用旧接口启动捕鱼游戏
@@ -954,9 +1050,9 @@ export function GameContent() {
                       <div className="fishing-game-name">{game.name}</div>
                     )}
                   </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="fishing-games-empty">暂无捕鱼游戏</div>
           )}

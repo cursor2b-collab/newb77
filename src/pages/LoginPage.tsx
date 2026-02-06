@@ -30,6 +30,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ name: '', password: '', code: '', key: '' });
   const [captchaImage, setCaptchaImage] = useState('');
+  const [captchaLoading, setCaptchaLoading] = useState(false);
   const [error, setError] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const secondImageRef = useRef<HTMLImageElement>(null);
@@ -61,21 +62,131 @@ export default function LoginPage() {
     setLanguage(code);
   };
 
-  const refreshCaptcha = useCallback(async () => {
+  const refreshCaptcha = useCallback(async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (captchaLoading) {
+      console.log('验证码正在加载中，跳过重复请求');
+      return; // 防止重复点击
+    }
+    
+    setCaptchaLoading(true);
     try {
-      const res = await getCaptcha();
-      if (res.code === 200 && res.data) {
-        const img = res.data.img || res.data.image || '';
-        setCaptchaImage(img.startsWith('data:') ? img : 'data:image/png;base64,' + img);
-        setFormData((prev) => ({ ...prev, key: res.data.key || res.data.captcha_key || '' }));
+      const res: any = await getCaptcha();
+      
+      // 处理响应可能是字符串的情况（两个JSON拼接：{"lang":"zh_cn"}{"status":"success",...}）
+      // 由于base64图片数据很长，直接解析JSON可能失败，使用正则表达式提取
+      if (typeof res === 'string') {
+        // 使用正则表达式直接从字符串中提取key和img
+        const keyMatch = res.match(/"key"\s*:\s*"([^"]+)"/);
+        const imgMatch = res.match(/"img"\s*:\s*"([^"]+)"/);
+        
+        if (keyMatch && imgMatch) {
+          const captchaKey = keyMatch[1];
+          const img = imgMatch[1];
+          const imageUrl = img.startsWith('data:') ? img : 'data:image/png;base64,' + img;
+          setCaptchaImage(imageUrl);
+          setFormData((prev) => ({ ...prev, key: captchaKey }));
+          setCaptchaLoading(false);
+          return;
+        }
+      }
+      
+      // 如果正则提取失败，尝试解析JSON
+      let responseData = res;
+      if (typeof res === 'string') {
+        try {
+          // 找到最后一个 { 的位置
+          const lastOpenBrace = res.lastIndexOf('{');
+          if (lastOpenBrace >= 0) {
+            // 尝试找到匹配的最后一个 }
+            let braceCount = 0;
+            let found = false;
+            for (let i = lastOpenBrace; i < res.length; i++) {
+              if (res[i] === '{') braceCount++;
+              if (res[i] === '}') {
+                braceCount--;
+                if (braceCount === 0) {
+                  const jsonStr = res.substring(lastOpenBrace, i + 1);
+                  responseData = JSON.parse(jsonStr);
+                  found = true;
+                  break;
+                }
+              }
+            }
+            if (!found) {
+              // 如果找不到匹配的}，尝试解析到字符串末尾
+              const jsonStr = res.substring(lastOpenBrace);
+              responseData = JSON.parse(jsonStr);
+            }
+          }
+        } catch (e) {
+          // JSON解析失败，但已经通过正则提取了，所以这里可以忽略
+        }
+      }
+      
+      // 如果 responseData 仍然是字符串，尝试从字符串中提取JSON
+      if (typeof responseData === 'string' && responseData.includes('{')) {
+        try {
+          const lastOpenBrace = responseData.lastIndexOf('{');
+          if (lastOpenBrace >= 0) {
+            responseData = JSON.parse(responseData.substring(lastOpenBrace));
+          }
+        } catch (e) {
+          // 忽略解析错误
+        }
+      }
+      
+      // 支持多种响应格式：
+      // 1. {code: 200, data: {...}}
+      // 2. {status: "success", code: 200, data: {...}}
+      const isSuccess = responseData && (
+        (responseData.code === 200 && responseData.data) || 
+        (responseData.status === 'success' && responseData.data)
+      );
+      
+      if (isSuccess) {
+        const img = responseData.data.img || responseData.data.image || '';
+        if (img) {
+          const imageUrl = img.startsWith('data:') ? img : 'data:image/png;base64,' + img;
+          setCaptchaImage(imageUrl);
+        } else {
+          setCaptchaImage('');
+        }
+        
+        const captchaKey = responseData.data.key || responseData.data.captcha_key || '';
+        if (captchaKey) {
+          setFormData((prev) => ({ ...prev, key: captchaKey }));
+        }
+      } else {
+        setCaptchaImage('');
       }
     } catch (err) {
+      console.error('获取验证码失败', err);
+      setCaptchaImage('');
+    } finally {
+      setCaptchaLoading(false);
     }
-  }, []);
+  }, [captchaLoading]);
 
+  // 页面加载时自动获取验证码（只执行一次）
   useEffect(() => {
-    refreshCaptcha();
-  }, [refreshCaptcha]);
+    // 如果已经有验证码图片，不重复加载
+    if (captchaImage) {
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      refreshCaptcha();
+    }, 200);
+    
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []); // 只在组件挂载时执行一次
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -97,9 +208,42 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await login(formData);
-      if (res.code === 200) {
-        const token = res.data && (res.data.api_token || res.data.access_token);
+      const res: any = await login(formData);
+      
+      // 处理响应可能是字符串的情况（两个JSON拼接：{"lang":"zh_cn"}{"status":"success",...}）
+      let responseData = res;
+      if (typeof res === 'string') {
+        try {
+          // 找到最后一个 { 的位置，然后解析到最后一个 }
+          const lastOpenBrace = res.lastIndexOf('{');
+          if (lastOpenBrace >= 0) {
+            const jsonStr = res.substring(lastOpenBrace);
+            responseData = JSON.parse(jsonStr);
+          }
+        } catch (e) {
+          console.error('解析登录响应失败:', e);
+        }
+      }
+      
+      // 如果 responseData 仍然是字符串，尝试从字符串中提取JSON
+      if (typeof responseData === 'string' && responseData.includes('{')) {
+        try {
+          const lastOpenBrace = responseData.lastIndexOf('{');
+          if (lastOpenBrace >= 0) {
+            responseData = JSON.parse(responseData.substring(lastOpenBrace));
+          }
+        } catch (e) {
+          console.error('二次解析登录响应失败:', e);
+        }
+      }
+      
+      // 支持多种响应格式：
+      // 1. {code: 200, data: {...}}
+      // 2. {status: "success", code: 200, data: {...}}
+      const isSuccess = (responseData && responseData.code === 200) || (responseData && responseData.status === 'success');
+      
+      if (isSuccess) {
+        const token = responseData.data && (responseData.data.api_token || responseData.data.access_token);
         if (token) {
           // 保存token（参考Vue实现）
           sessionStorage.setItem('token', token);
@@ -135,14 +279,24 @@ export default function LoginPage() {
           setError(t('loginFailedNoToken'));
         }
       } else {
-        setError(res.message || t('loginFailed'));
+        const errorMsg = responseData?.message || responseData?.data?.message || t('loginFailed');
+        setError(errorMsg);
+        console.error('登录失败:', responseData);
         setFormData((prev) => ({ ...prev, code: '' }));
-        refreshCaptcha();
+        // 延迟刷新验证码，确保错误信息先显示
+        setTimeout(() => {
+          refreshCaptcha();
+        }, 300);
       }
     } catch (err: any) {
-      setError(err?.message || t('loginFailed'));
+      const errorMsg = err?.response?.data?.message || err?.message || t('loginFailed');
+      setError(errorMsg);
+      console.error('登录异常:', err);
       setFormData((prev) => ({ ...prev, code: '' }));
-      refreshCaptcha();
+      // 延迟刷新验证码，确保错误信息先显示
+      setTimeout(() => {
+        refreshCaptcha();
+      }, 300);
     } finally {
       setLoading(false);
     }
@@ -581,28 +735,65 @@ export default function LoginPage() {
                   caretColor: '#ffc53e'
                 }}
               />
-              {captchaImage ? (
-                <img
-                  src={captchaImage}
-                  onClick={refreshCaptcha}
-                  style={{
-                    position: 'absolute',
-                    right: '15px',
-                    cursor: 'pointer',
-                    height: '36px',
-                    width: 'auto',
-                    background: '#0C0E13',
-                    padding: '2px',
-                    borderRadius: '4px',
-                    mixBlendMode: 'screen'
-                  }}
-                  alt="验证码"
-                />
-              ) : (
-                <span onClick={refreshCaptcha} style={{ cursor: 'pointer', color: '#999', marginLeft: '10px' }}>
-                  {t('clickGetCode')}
-                </span>
-              )}
+              <div style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                {captchaImage ? (
+                  <img
+                    src={captchaImage}
+                    onClick={(e) => {
+                      console.log('验证码图片被点击');
+                      e.preventDefault();
+                      e.stopPropagation();
+                      refreshCaptcha(e);
+                    }}
+                    onError={(e) => {
+                      console.error('验证码图片加载失败，清空图片');
+                      setCaptchaImage('');
+                    }}
+                    onLoad={() => {
+                      console.log('✅ 验证码图片加载成功');
+                    }}
+                    style={{
+                      cursor: captchaLoading ? 'wait' : 'pointer',
+                      height: '36px',
+                      width: 'auto',
+                      minWidth: '80px',
+                      maxWidth: '120px',
+                      background: '#0C0E13',
+                      padding: '2px',
+                      borderRadius: '4px',
+                      mixBlendMode: 'screen',
+                      pointerEvents: 'auto',
+                      opacity: captchaLoading ? 0.6 : 1,
+                      transition: 'opacity 0.2s',
+                      userSelect: 'none',
+                      display: 'block'
+                    }}
+                    alt="验证码"
+                    title="点击刷新验证码"
+                  />
+                ) : (
+                  <span 
+                    onClick={(e) => {
+                      console.log('验证码文字提示被点击');
+                      e.preventDefault();
+                      e.stopPropagation();
+                      refreshCaptcha(e);
+                    }} 
+                    style={{ 
+                      cursor: captchaLoading ? 'wait' : 'pointer', 
+                      color: '#999', 
+                      fontSize: '14px',
+                      pointerEvents: 'auto',
+                      userSelect: 'none',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block',
+                      padding: '8px 12px'
+                    }}
+                  >
+                    {captchaLoading ? '加载中...' : t('clickGetCode')}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

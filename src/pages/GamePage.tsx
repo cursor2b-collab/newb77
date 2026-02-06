@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getGameUrl, gameTransferOut, shouldUseNewGameApi, getUserId, mapApiCodeToVendorCode } from '@/lib/api/game';
+import { getGameUrl, gameTransferOut } from '@/lib/api/game';
+// import { shouldUseNewGameApi, getUserId, mapApiCodeToVendorCode } from '@/lib/api/game'; // 已注释：新游戏API调用已全部注释掉
 // import { newGameApiService } from '@/lib/api/newGameApi';
 import { useAuth } from '@/contexts/AuthContext';
 import Loader from '@/components/Loader';
@@ -383,51 +384,50 @@ export default function GamePage() {
       // 优先检查是否有 vendorCode（新游戏接口）- 已注释
       // 如果有 vendorCode，直接使用新接口转出
       // if (vendorCode) {
-      if (false) { // 新游戏API调用已全部注释掉
-        // console.log('✅ 使用新游戏接口转出（vendorCode）:', vendorCode);
-        // try {
-        //   // 获取用户ID
-        //   const userId = await getUserId();
-        //   if (!userId) {
-        //     console.warn('⚠️ 无法获取用户ID，无法转出');
-        //     return;
-        //   }
-        //   
-        //   console.log('🔄 调用 withdrawAll:', { userId, vendorCode });
-        //   
-        //   // 使用 withdrawAll 转出所有余额
-        //   const withdrawResponse = await newGameApiService.withdrawAll(userId, vendorCode);
-          
-          console.log('📊 withdrawAll 响应:', withdrawResponse);
-          
-          if (withdrawResponse && (withdrawResponse.success === true || withdrawResponse.success === 'true')) {
-            console.log('✅ 余额转出成功！');
-            // 刷新用户余额
-            if (refreshUserInfo) {
-              await refreshUserInfo(true);
-            }
-          } else {
-            console.error('❌ 新游戏接口转出失败:', withdrawResponse);
-            console.error('❌ 失败详情:', {
-              success: withdrawResponse?.success,
-              message: withdrawResponse?.message,
-              error: withdrawResponse?.error,
-              errorCode: withdrawResponse?.errorCode,
-              data: withdrawResponse?.data
-            });
-          }
-        } catch (newApiError: any) {
-          console.error('❌ 新游戏接口转出异常:', newApiError);
-          console.error('❌ 异常详情:', {
-            message: newApiError?.message,
-            response: newApiError?.response,
-            error: newApiError?.error,
-            errorCode: newApiError?.errorCode,
-            data: newApiError?.data
-          });
-        }
-        return;
-      } */
+      //   console.log('✅ 使用新游戏接口转出（vendorCode）:', vendorCode);
+      //   try {
+      //     // 获取用户ID
+      //     const userId = await getUserId();
+      //     if (!userId) {
+      //       console.warn('⚠️ 无法获取用户ID，无法转出');
+      //       return;
+      //     }
+      //     
+      //     console.log('🔄 调用 withdrawAll:', { userId, vendorCode });
+      //     
+      //     // 使用 withdrawAll 转出所有余额
+      //     const withdrawResponse = await newGameApiService.withdrawAll(userId, vendorCode);
+      //     
+      //     console.log('📊 withdrawAll 响应:', withdrawResponse);
+      //     
+      //     if (withdrawResponse && (withdrawResponse.success === true || withdrawResponse.success === 'true')) {
+      //       console.log('✅ 余额转出成功！');
+      //       // 刷新用户余额
+      //       if (refreshUserInfo) {
+      //         await refreshUserInfo(true);
+      //       }
+      //     } else {
+      //       console.error('❌ 新游戏接口转出失败:', withdrawResponse);
+      //       console.error('❌ 失败详情:', {
+      //         success: withdrawResponse?.success,
+      //         message: withdrawResponse?.message,
+      //         error: withdrawResponse?.error,
+      //         errorCode: withdrawResponse?.errorCode,
+      //         data: withdrawResponse?.data
+      //       });
+      //     }
+      //   } catch (newApiError: any) {
+      //     console.error('❌ 新游戏接口转出异常:', newApiError);
+      //     console.error('❌ 异常详情:', {
+      //       message: newApiError?.message,
+      //       response: newApiError?.response,
+      //       error: newApiError?.error,
+      //       errorCode: newApiError?.errorCode,
+      //       data: newApiError?.data
+      //     });
+      //   }
+      //   return;
+      // }
       
       // 如果没有 vendorCode，检查是否使用新游戏接口 - 已注释
       // 注意：新接口只支持真人（gameType=1）和电游（gameType=2,3），不支持体育、彩票、棋牌
@@ -463,40 +463,43 @@ export default function GamePage() {
       //     
       //     // 使用 withdrawAll 转出所有余额
       //     const withdrawResponse = await newGameApiService.withdrawAll(userId, mappedVendorCode);
-          
-          console.log('📊 withdrawAll 响应（映射）:', withdrawResponse);
-          
-          if (withdrawResponse && (withdrawResponse.success === true || withdrawResponse.success === 'true')) {
-            console.log('✅ 余额转出成功！');
-            // 刷新用户余额
-            if (refreshUserInfo) {
-              await refreshUserInfo(true);
-            }
-          } else {
-            console.warn('⚠️ 新游戏接口转出失败，尝试旧接口:', withdrawResponse);
-            // 如果新接口失败，尝试使用旧接口
-            const res = await gameTransferOut(platformName);
-            if (res.code === 200 || res.status === 'success') {
-              if (refreshUserInfo) {
-                await refreshUserInfo(true);
-              }
-            }
-          }
-        } catch (newApiError: any) {
-          console.error('❌ 新游戏接口转出异常，尝试旧接口:', newApiError);
-          // 如果新接口异常，尝试使用旧接口
-          try {
-            const res = await gameTransferOut(platformName);
-            if (res.code === 200 || res.status === 'success') {
-              if (refreshUserInfo) {
-                await refreshUserInfo(true);
-              }
-            }
-          } catch (oldApiError) {
-            console.error('❌ 旧接口转出也失败:', oldApiError);
-          }
-        }
-      } else if (platformName) {
+      //     
+      //     console.log('📊 withdrawAll 响应（映射）:', withdrawResponse);
+      //     
+      //     if (withdrawResponse && (withdrawResponse.success === true || withdrawResponse.success === 'true')) {
+      //       console.log('✅ 余额转出成功！');
+      //       // 刷新用户余额
+      //       if (refreshUserInfo) {
+      //         await refreshUserInfo(true);
+      //       }
+      //     } else {
+      //       console.warn('⚠️ 新游戏接口转出失败，尝试旧接口:', withdrawResponse);
+      //       // 如果新接口失败，尝试使用旧接口
+      //       const res = await gameTransferOut(platformName);
+      //       if (res.code === 200 || res.status === 'success') {
+      //         if (refreshUserInfo) {
+      //           await refreshUserInfo(true);
+      //         }
+      //       }
+      //     }
+      //   } catch (newApiError: any) {
+      //     console.error('❌ 新游戏接口转出异常，尝试旧接口:', newApiError);
+      //     // 如果新接口异常，尝试使用旧接口
+      //     try {
+      //       const res = await gameTransferOut(platformName);
+      //       if (res.code === 200 || res.status === 'success') {
+      //         if (refreshUserInfo) {
+      //           await refreshUserInfo(true);
+      //         }
+      //       }
+      //     } catch (oldApiError) {
+      //       console.error('❌ 旧接口转出也失败:', oldApiError);
+      //     }
+      //   }
+      // }
+      
+      // 使用旧接口转出
+      if (platformName) {
         // 使用旧接口转出
         console.log('✅ 使用旧接口转出:', platformName);
         const res = await gameTransferOut(platformName);
