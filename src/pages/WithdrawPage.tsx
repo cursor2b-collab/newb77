@@ -273,7 +273,7 @@ export default function WithdrawPage() {
         </button>
       </div>
           <div style={{ fontSize: '12px', padding: '20px' }}>
-            <div>汇赢娱乐官方温馨提示：</div>
+            <div>B77官方温馨提示：</div>
             <div style={{paddingLeft: '10px', color: '#ff4444'}}>
               <div style={{ fontWeight: 500, marginTop: '8px', color:'#fff' }}>USDT提现方式：</div>
               <div>填写平台余额后台自动按照USDT当天费率自动转账到你钱包地址，提现到账时间一般为10分钟内。</div>

@@ -2092,7 +2092,7 @@ export function DepositPage({ onBack }: DepositPageProps) {
                   touchAction: 'manipulation'
                 }}
               />
-            // <div style={{fontSize: '14px', color: '#ff4444', fontWeight: 600, lineHeight: 1.8, paddingLeft: '0px', margin: 0}}>汇赢娱乐官方温馨提示：USDT充值正在维护请转人民币区支付</div>
+            // <div style={{fontSize: '14px', color: '#ff4444', fontWeight: 600, lineHeight: 1.8, paddingLeft: '0px', margin: 0}}>B77官方温馨提示：USDT充值正在维护请转人民币区支付</div>
           ) : (
             <input
                 type="text"
@@ -2167,7 +2167,7 @@ export function DepositPage({ onBack }: DepositPageProps) {
           <ol style={{ fontSize: '12px', color: '#ff4444', fontWeight: 600, lineHeight: 1.8, paddingLeft: '0px', margin: 0 }}>
             <li>充值USDT请核对地址进行充值</li>
             <li>USDT充值到账时间为1分钟自动到账</li>
-            <li>提现请点击汇赢娱乐卡包添加提现账号</li>
+            <li>提现请点击B77卡包添加提现账号</li>
             <li>已经转账情况下如未到账请联系客服提交充值截图</li>
             <li> 存款成功后,需达到三倍有效投注额方可提款-防套现-防洗钱。</li>
             <li></li>

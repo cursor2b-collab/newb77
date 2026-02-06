@@ -270,7 +270,7 @@ export function LoaderHome() {
               <img src="/images/week/IMG_0371.png" className="u-img-logo s-dark" /> 
               <img src="/images/week/IMG_0371.png" className="u-img-logo s-light" />
             </div>
-            <div className="u-name">汇赢娱乐</div>
+            <div className="u-name">B77</div>
           </div>
           <div className="u-loading">
             <img 

@@ -429,7 +429,7 @@ export default function AboutPage() {
                         <div className="sect1">
                             <div className="box">
                                 <div className="detail">
-                                    <h1 >汇赢娱乐娱乐优势</h1>
+                                    <h1 >B77娱乐优势</h1>
                                     <p >单日提款高达<span >2,000万</span></p>
                                     <p >随时洗码1秒到账</p>
                                     <p >单笔下注金额为最高<span >500万</span></p>
@@ -529,7 +529,7 @@ export default function AboutPage() {
                             <p ><i className="orb3"></i><span >月月分红</span> 最高可享200,000股
                             </p>
                             <p ><i className="orb4"></i><span >账号回购</span>
-                                汇赢娱乐官方保底账号回购1,400,000元 </p>
+                                B77官方保底账号回购1,400,000元 </p>
                             <p ><i className="orb5"></i><span >晋级礼金</span>
                                 累计最高可享6,015,500元 </p>
                             <p ><i className="orb6"></i><span >免息贷款</span>

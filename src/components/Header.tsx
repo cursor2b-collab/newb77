@@ -98,25 +98,34 @@ export function Header() {
       `}
       </style>
     <header 
-      className="px-4 py-2 border-b border-gray-800 relative"
+      className="py-2 border-b border-gray-800 relative"
       style={{
         // backgroundColor: 'rgba(0,0,0,0.93)',
-        backgroundImage: 'url(https://www.xpj00000.vip/indexImg/bg.e96230e4.png)',
+        backgroundImage: 'url(/images/bg.e96230e4.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        paddingLeft: '0',
+        paddingRight: '1rem'
       }}
     >
       <div className="flex items-center justify-between relative z-10">
         {/* 左侧 Logo 区域 */}
         <div className="flex items-center gap-1">
           {/* 固定 Logo */}
-          <div className="flex items-center" style={{ height: '33px' }}>
+          <div className="flex items-center" style={{ height: '44px' }}>
             <img
-              src="/images/newimg/8ec32.avif"
+              src="/images/newimg/B7.png"
               alt="Logo"
               className="h-full"
-              style={{ width: '74px', paddingRight: '4px' }}
+              style={{ 
+                width: '98px', 
+                paddingRight: '4px',
+                imageRendering: '-webkit-optimize-contrast',
+                objectFit: 'contain',
+                transform: 'translateZ(0)',
+                backfaceVisibility: 'hidden'
+              }}
             />
           </div>
 

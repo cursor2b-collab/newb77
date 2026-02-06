@@ -62,10 +62,10 @@ export default function FavoritesPage() {
   };
 
   const openOnlineService2 = () => {
-    window.open('https://www.xpj77777.com', '_blank');
+    window.open('https://www.beebet77.com', '_blank');
   };
   const openOnlineService3 = () => {
-    window.open('https://www.xpj00000.vip', '_blank');
+    window.open('https://www.beebet77.com', '_blank');
   };
 
   return (
@@ -148,10 +148,10 @@ export default function FavoritesPage() {
             >
               <img
                 src="https://www.xpj00000.vip/indexImg/icon_service.6b1fddf8.png"
-                alt="汇赢娱乐官方:www.xpj77777.com"
+                alt="B77官方:www.beebet77.com"
                 style={{ width: '32px', height: '32px', flexShrink: 0 }}
               />
-              <span style={{ flex: 1 }}>汇赢娱乐官方：www.xpj77777.com</span>
+              <span style={{ flex: 1 }}>B77官方：www.beebet77.com</span>
             </div>
           </div>
           <div style={{ marginTop: '20px' }}>
@@ -186,10 +186,10 @@ export default function FavoritesPage() {
             >
               <img
                 src="https://www.xpj00000.vip/indexImg/icon_service.6b1fddf8.png"
-                alt="汇赢娱乐官方：www.xpj00000.vip"
+                alt="B77官方：www.beebet77.com"
                 style={{ width: '32px', height: '32px', flexShrink: 0 }}
               />
-              <span style={{ flex: 1 }}>汇赢娱乐官方：www.xpj00000.vip</span>
+              <span style={{ flex: 1 }}>B77官方：www.beebet77.com</span>
             </div>
           </div>
 

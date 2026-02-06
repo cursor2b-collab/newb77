@@ -740,8 +740,8 @@ export default function DepositOrderDetailPage() {
               })}
             </select>
             <div style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginTop: '8px', color: '#ff4444' }}>
-              汇赢娱乐官方温馨提示：
-              <div style={{ marginLeft:'20px' }}>请选择汇赢娱乐卡包里面绑定的USDT地址进行转账</div>
+              B77官方温馨提示：
+              <div style={{ marginLeft:'20px' }}>请选择B77卡包里面绑定的USDT地址进行转账</div>
             </div>
           </div>
         )}

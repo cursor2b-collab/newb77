@@ -44,7 +44,7 @@ export const translations = {
     quickRecord: '投注流水',
     
     // User Center - Menu Items
-    menuBankCard: '汇赢娱乐卡包',
+    menuBankCard: 'B77卡包',
     menuCredit: '免息借呗',
     menuProfile: '个人资料',
     menuPromotion: '推广赚钱',
@@ -123,13 +123,13 @@ export const translations = {
     appDownloadTitle: 'APP/游戏下载',
 
     // Bank Card Page
-    bankCardTitle: '汇赢娱乐卡包',
-    bankCardChange: '汇赢娱乐卡包信息',
+    bankCardTitle: 'B77卡包',
+    bankCardChange: 'B77卡包信息',
     addBankCard: '添加卡包信息',
     noBankCard: '暂无银行卡，请添加',
-    selectBankName: '选择汇赢娱乐卡包',
-    pleaseSelectBank: '请选择汇赢娱乐卡包',
-    bankName: '汇赢娱乐卡包',
+    selectBankName: '选择B77卡包',
+    pleaseSelectBank: '请选择B77卡包',
+    bankName: 'B77卡包',
     ownerName: '开户人姓名',
     enterOwnerName: '请输入开户人姓名',
     ownerName2: '会员账号',

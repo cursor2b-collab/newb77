@@ -415,7 +415,7 @@ export function Footer({
           </ul>
           <div className="copyright">
             <div className="img-loading finished" >
-              Copyright © 2026 汇赢娱乐版权所有
+              Copyright © 2026 B77版权所有
             </div>
           </div>
         </div>

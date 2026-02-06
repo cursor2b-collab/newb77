@@ -84,9 +84,9 @@ export default function UserCenterPage() {
   
   // 广告轮播相关
   const bannerImages = [
-    'https://www.xpj00000.vip/indexImg/15226.png',
-    'https://www.xpj00000.vip/indexImg/55264.png',
-    'https://www.xpj00000.vip/indexImg/cd689ea6f99a04711fe1307b4a70c9eb.gif'
+    'https://ik.imagekit.io/gpbvknoim/fe1e7ae0-4ccb-4786-8fe8-666254c5cd66.png',
+    'https://ik.imagekit.io/gpbvknoim/5b8a493.avif',
+    'https://ik.imagekit.io/gpbvknoim/1ea.avif'
   ];
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
@@ -436,7 +436,7 @@ export default function UserCenterPage() {
                 style={{
                   position: 'absolute',
                   bottom: '27px',
-                  left: '240px',
+                  left: '180px',
                   width: 'auto',
                   height: 'auto',
                   maxWidth: '70px',
@@ -570,7 +570,7 @@ export default function UserCenterPage() {
         {/* 轮播广告 */}
         <div style={{ 
           width: '100%', 
-          height: '120px', 
+          height: '180px', 
           borderRadius: '12px', 
           overflow: 'hidden', 
           marginBottom: '16px',

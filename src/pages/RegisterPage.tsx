@@ -45,7 +45,7 @@ export default function RegisterPage() {
         try {
           const res = await getSystemConfig('register');
           if (res.code === 200 && res.data) {
-            // const siteName = res.data.site_name || res.data.site_title || '汇赢娱乐';
+            // const siteName = res.data.site_name || res.data.site_title || 'B77';
             // document.title = siteName;
             setIsInviteCodeRequired(res.data.isInviteCodeRequired_mobile);
             console.log('register:', res.data.isInviteCodeRequired_mobile);

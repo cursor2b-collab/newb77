@@ -449,7 +449,7 @@ export default function AppDownloadPage() {
                                                 </div>
                                             </div>
                                             <div className="info">
-                                                <h3 > 汇赢娱乐娱乐全新手机APP </h3>
+                                                <h3 > B77娱乐全新手机APP </h3>
                                                 <div className="conp">体验更好、速度更快、玩转社区</div>
                                             </div>
                                             <div className="item-btn">
