@@ -1,5 +1,6 @@
 import { useGames } from '@/contexts/GameContext';
-import { openGame, openNewGame } from '@/utils/gameUtils';
+import { openGame } from '@/utils/gameUtils';
+// import { openNewGame } from '@/utils/gameUtils';
 
 export function BaccaratBanners() {
   const { realbetList } = useGames();
@@ -73,21 +74,21 @@ export function BaccaratBanners() {
     }
   ];
 
-  // 新游戏接口映射（根据游戏名称或平台名称）
-  const newGameApiMap: Record<string, { vendorCode: string; gameCode: string }> = {
-    'BBIN旗舰厅': { vendorCode: 'casino-playace', gameCode: 'lobby' },
-    'BBIN视讯': { vendorCode: 'casino-playace', gameCode: 'lobby' },
-    'DG视讯': { vendorCode: 'casino-sa', gameCode: 'lobby' },
-    '完美视讯': { vendorCode: 'casino-playace', gameCode: 'lobby' },
-    'EVO视讯': { vendorCode: 'casino-playace', gameCode: 'lobby' },
-    'BG视讯': { vendorCode: 'casino-ezugi', gameCode: 'lobby' },
-    // 平台名称映射
-    'BBIN': { vendorCode: 'casino-playace', gameCode: 'lobby' },
-    'DG': { vendorCode: 'casino-sa', gameCode: 'lobby' },
-    'WM': { vendorCode: 'casino-playace', gameCode: 'lobby' },
-    'EVO': { vendorCode: 'casino-playace', gameCode: 'lobby' },
-    'BG': { vendorCode: 'casino-ezugi', gameCode: 'lobby' },
-  };
+  // 新游戏接口映射（根据游戏名称或平台名称）- 已注释
+  // const newGameApiMap: Record<string, { vendorCode: string; gameCode: string }> = {
+  //   'BBIN旗舰厅': { vendorCode: 'casino-playace', gameCode: 'lobby' },
+  //   'BBIN视讯': { vendorCode: 'casino-playace', gameCode: 'lobby' },
+  //   'DG视讯': { vendorCode: 'casino-sa', gameCode: 'lobby' },
+  //   '完美视讯': { vendorCode: 'casino-playace', gameCode: 'lobby' },
+  //   'EVO视讯': { vendorCode: 'casino-playace', gameCode: 'lobby' },
+  //   'BG视讯': { vendorCode: 'casino-ezugi', gameCode: 'lobby' },
+  //   // 平台名称映射
+  //   'BBIN': { vendorCode: 'casino-playace', gameCode: 'lobby' },
+  //   'DG': { vendorCode: 'casino-sa', gameCode: 'lobby' },
+  //   'WM': { vendorCode: 'casino-playace', gameCode: 'lobby' },
+  //   'EVO': { vendorCode: 'casino-playace', gameCode: 'lobby' },
+  //   'BG': { vendorCode: 'casino-ezugi', gameCode: 'lobby' },
+  // };
 
   // 使用真实游戏数据，如果游戏列表有数据，则使用前6个游戏（去除第6和第7个）
   const banners = realbetList.length > 0 
@@ -212,19 +213,22 @@ export function BaccaratBanners() {
               key={banner.id} 
               className="baccarat-banner-item"
               onClick={() => {
-                // 检查是否应该使用新游戏接口
-                const newGameConfig = newGameApiMap[banner.alt] || newGameApiMap[banner.platformName];
+                // 新游戏API调用已全部注释掉，统一使用旧接口
+                // const newGameConfig = newGameApiMap[banner.alt] || newGameApiMap[banner.platformName];
+                // 
+                // if (newGameConfig) {
+                //   // 使用新游戏接口
+                //   openNewGame(newGameConfig.vendorCode, newGameConfig.gameCode, banner.gameType);
+                // } else if (banner.id === 1) {
+                //   // 第一个banner使用新游戏接口（PlayAce）
+                //   openNewGame('casino-playace', 'P060', 1);
+                // } else {
+                //   // 使用旧接口
+                //   openGame(banner.platformName, banner.gameType, banner.gameCode);
+                // }
                 
-                if (newGameConfig) {
-                  // 使用新游戏接口
-                  openNewGame(newGameConfig.vendorCode, newGameConfig.gameCode, banner.gameType);
-                } else if (banner.id === 1) {
-                  // 第一个banner使用新游戏接口（PlayAce）
-                  openNewGame('casino-playace', 'P060', 1);
-                } else {
-                  // 使用旧接口
-                  openGame(banner.platformName, banner.gameType, banner.gameCode);
-                }
+                // 统一使用旧接口
+                openGame(banner.platformName, banner.gameType, banner.gameCode);
               }}
             >
               <img 

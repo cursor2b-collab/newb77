@@ -3,8 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import { openGame } from '@/utils/gameUtils';
-import { newGameApiService } from '@/lib/api/newGameApi';
-import { getGameApiLanguage } from '@/utils/languageMapper';
+import { useGames } from '@/contexts/GameContext';
 
 interface GameData {
   position: number;
@@ -20,120 +19,55 @@ interface GameData {
 
 export function WeekRecommend() {
   const swiper = useRef(null); // 创建ref来存储Swiper实例
+  const { gamingList, loading: gamesLoading } = useGames(); // 从 GameContext 获取游戏列表
   const [games, setGames] = useState<GameData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 本周推荐游戏配置（游戏代码映射）
-  const weekGamesConfig = [
-    { name: '鲨鱼赏金', gameCode: 'shark-hunter', vendorCode: 'slot-pgsoft', position: 0, size: 'small' as const, image: '/images/week/vs20sugarrush1.png', platformName: 'PG', gameType: 3 },
-    { name: '麻将胡了', gameCode: 'mahjong-ways', vendorCode: 'slot-pgsoft', position: 1, size: 'big' as const, image: '/images/week/163-zh-F.png', platformName: 'PG', gameType: 3 },
-    { name: '麻将胡了2', gameCode: 'mahjong-ways2', vendorCode: 'slot-pgsoft', position: 2, size: 'small' as const, marginTop: true, image: '/images/week/184-zh-F.png', platformName: 'PG', gameType: 3 },
-    { name: '寻宝黄金城', gameCode: 'treasures-aztec', vendorCode: 'slot-pgsoft', position: 3, size: 'small' as const, marginTop: true, image: '/images/week/185-zh-F.png', platformName: 'PG', gameType: 3 },
-    { name: '赏金女王', gameCode: 'queen-bounty', vendorCode: 'slot-pgsoft', position: 4, size: 'small' as const, marginTop: true, image: '/images/week/app_icon_small.png', platformName: 'PG', gameType: 3 },
-    { name: '麒麟送宝', gameCode: 'ways-of-qilin', vendorCode: 'slot-pgsoft', position: 5, size: 'small' as const, marginTop: true, image: '/images/week/3x-503be228.png', platformName: 'PG', gameType: 3 }
-  ];
-
-  // 从新游戏接口获取游戏数据
+  // 从 game_lists 表获取 PG 电子游戏
   useEffect(() => {
-    const fetchGames = async () => {
+    if (gamesLoading) {
       setLoading(true);
-      try {
-        const gameApiLanguage = getGameApiLanguage();
-        // console.log('🌐 本周推荐游戏使用语言代码:', gameApiLanguage);
+      return;
+    }
 
-        // 获取供应商列表
-        const vendorsResponse = await newGameApiService.getVendorsList();
-        let vendors: any[] = [];
-        
-        if (Array.isArray(vendorsResponse)) {
-          vendors = vendorsResponse;
-        } else if (vendorsResponse && vendorsResponse.message && Array.isArray(vendorsResponse.message)) {
-          vendors = vendorsResponse.message;
-        } else if (vendorsResponse && vendorsResponse.success && vendorsResponse.message) {
-          vendors = Array.isArray(vendorsResponse.message) ? vendorsResponse.message : [];
-        }
+    try {
+      // 筛选 PG 平台的电子游戏（game_type = 3）
+      const pgGames = gamingList.filter(game => 
+        (game.platform_name || '').toUpperCase() === 'PG' && 
+        game.game_type === 3
+      );
 
-        // 获取所有需要的供应商的游戏列表
-        const vendorCodes = [...new Set(weekGamesConfig.map(g => g.vendorCode))];
-        const gamesMap = new Map<string, any[]>();
+      // 取前 6 个游戏作为本周推荐
+      const selectedGames = pgGames.slice(0, 6);
 
-        // 并行获取每个供应商的游戏列表
-        const gamesPromises = vendorCodes.map(async (vendorCode) => {
-          try {
-            // 检查供应商是否存在
-            const vendor = vendors.find((v: any) => v.vendorCode === vendorCode);
-            if (!vendor) {
-              console.warn(`⚠️ 供应商 ${vendorCode} 不存在，跳过`);
-              return;
-            }
+      // 转换为 GameData 格式
+      const gameDataList: GameData[] = selectedGames.map((game, index) => {
+        // 根据位置决定大小：第一个大图，其他小图
+        const size: 'small' | 'big' = index === 1 ? 'big' : 'small';
+        const marginTop = index >= 2;
 
-            const gamesResponse = await newGameApiService.getGamesList(vendorCode, gameApiLanguage);
-            let games: any[] = [];
-            
-            if (Array.isArray(gamesResponse)) {
-              games = gamesResponse;
-            } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
-              games = gamesResponse.message;
-            } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
-              games = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
-            }
+        return {
+          position: index,
+          size,
+          marginTop,
+          image: game.cover || '',
+          platformName: game.platform_name || 'PG',
+          gameType: game.game_type || 3,
+          gameCode: game.game_code || '',
+          name: game.name || '',
+          vendorCode: '' // 旧接口不需要 vendorCode
+        };
+      });
 
-            gamesMap.set(vendorCode, games);
-            // console.log(`✅ 供应商 ${vendorCode} 获取到 ${games.length} 个游戏`);
-          } catch (error) {
-            console.error(`获取供应商 ${vendorCode} 的游戏失败:`, error);
-            gamesMap.set(vendorCode, []);
-          }
-        });
-
-        await Promise.all(gamesPromises);
-
-        // 根据配置匹配游戏
-        const matchedGames: GameData[] = weekGamesConfig.map((config) => {
-          const vendorGames = gamesMap.get(config.vendorCode) || [];
-          
-          // 尝试通过gameCode匹配游戏
-          let matchedGame = vendorGames.find((g: any) => 
-            g.gameCode === config.gameCode || 
-            g.gameCode?.toLowerCase() === config.gameCode?.toLowerCase()
-          );
-
-          // 如果没找到，尝试通过游戏名称匹配
-          if (!matchedGame) {
-            matchedGame = vendorGames.find((g: any) => 
-              g.gameName?.toLowerCase().includes(config.name.toLowerCase()) ||
-              config.name.toLowerCase().includes(g.gameName?.toLowerCase() || '')
-            );
-          }
-
-          // 如果找到了匹配的游戏，使用API返回的数据
-          if (matchedGame) {
-            return {
-              ...config,
-              image: matchedGame.thumbnail || config.image,
-              gameCode: matchedGame.gameCode || config.gameCode,
-              vendorCode: matchedGame.vendorCode || config.vendorCode
-            };
-          }
-
-          // 如果没找到，使用配置的默认值
-          console.warn(`⚠️ 未找到游戏: ${config.name} (${config.gameCode})，使用默认配置`);
-          return config as GameData;
-        });
-
-        setGames(matchedGames);
-        // console.log('✅ 成功获取本周推荐游戏列表，共', matchedGames.length, '个游戏');
-      } catch (error) {
-        console.error('❌ 获取本周推荐游戏列表失败:', error);
-        // 如果API失败，使用配置的默认值
-        setGames(weekGamesConfig as GameData[]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGames();
-  }, []);
+      setGames(gameDataList);
+      console.log('✅ 从 game_lists 表获取到 PG 游戏:', gameDataList.length, '个');
+    } catch (error) {
+      console.error('❌ 处理 PG 游戏列表失败:', error);
+      setGames([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [gamingList, gamesLoading]);
   const games2 = [
     {
       position: 0,
@@ -425,32 +359,15 @@ export function WeekRecommend() {
                       key={game.position} 
                       className="item2 position"
                       onClick={async () => {
-                        // 使用新游戏接口启动游戏
-                        // 将vendorCode转换为platformName格式（如 slot-pgsoft -> PG）
-                        const platformMap: Record<string, string> = {
-                          'slot-pgsoft': 'PG',
-                          'slot-pragmatic': 'PP',
-                          'slot-cq9': 'CQ9',
-                          'slot-hacksaw': 'HACKSAW',
-                          'slot-titan': 'TITAN',
-                          'slot-uppercut': 'UPPERCUT',
-                          'slot-peter': 'PETER',
-                          'slot-jdb': 'JDB',
-                          'casino-evolution': 'AG',
-                          'sport': 'AI',
-                          'joker': 'KY'
-                        };
-                        const platformName = platformMap[game.vendorCode] || game.platformName.toUpperCase().replace('SLOT-', '').replace('CASINO-', '');
-                        
+                        // 使用旧接口启动游戏（从 game_lists 表获取的游戏）
                         console.log('🎮 启动本周推荐游戏:', {
                           name: game.name,
-                          vendorCode: game.vendorCode,
+                          platformName: game.platformName,
                           gameCode: game.gameCode,
-                          platformName,
                           gameType: game.gameType
                         });
                         
-                        openGame(platformName, game.gameType, game.gameCode);
+                        openGame(game.platformName, game.gameType, game.gameCode);
                       }}
                     >
                       <div className="home-intro-game-card2">

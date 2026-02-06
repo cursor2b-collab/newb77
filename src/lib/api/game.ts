@@ -2,7 +2,7 @@
  * 游戏相关API
  */
 import apiClient from './client';
-import { newGameApiService } from './newGameApi';
+// import { newGameApiService } from './newGameApi';
 
 export interface Game {
   id?: number;
@@ -180,22 +180,25 @@ export const getGameList = (category?: string): Promise<GameListResponse> => {
 };
 
 // 检查是否使用新游戏接口
+// export const shouldUseNewGameApi = (): boolean => {
+//   // 可以通过环境变量或localStorage配置
+//   const envValue = import.meta.env.VITE_USE_NEW_GAME_API;
+//   const localStorageValue = localStorage.getItem('use_new_game_api');
+//   
+//   // 临时强制启用新接口（用于测试和调试）
+//   // 注意：生产环境应该通过环境变量或localStorage控制
+//   const FORCE_ENABLE_NEW_API = true; // 临时设置为true强制启用
+//   
+//   const useNewApi = FORCE_ENABLE_NEW_API || 
+//                     envValue === 'true' || 
+//                     String(envValue) === 'true' ||  // 兼容字符串类型
+//                     localStorageValue === 'true';
+//   
+//   
+//   return useNewApi;
+// };
 export const shouldUseNewGameApi = (): boolean => {
-  // 可以通过环境变量或localStorage配置
-  const envValue = import.meta.env.VITE_USE_NEW_GAME_API;
-  const localStorageValue = localStorage.getItem('use_new_game_api');
-  
-  // 临时强制启用新接口（用于测试和调试）
-  // 注意：生产环境应该通过环境变量或localStorage控制
-  const FORCE_ENABLE_NEW_API = true; // 临时设置为true强制启用
-  
-  const useNewApi = FORCE_ENABLE_NEW_API || 
-                    envValue === 'true' || 
-                    String(envValue) === 'true' ||  // 兼容字符串类型
-                    localStorageValue === 'true';
-  
-  
-  return useNewApi;
+  return false; // 禁用新游戏接口
 };
 
 // 获取用户ID（从用户信息中获取）
@@ -290,7 +293,8 @@ export const getGameUrl = async (params: {
   const useNewApi = shouldUseNewGameApi() && isNewApiSupportedGameType && !isPA && !isAG && !isBG;
   
   // 如果启用了新接口且游戏类型支持，优先使用新接口
-  if (useNewApi) {
+  // 新游戏API调用已全部注释掉
+  /* if (useNewApi) {
     try {
       
       // 获取用户ID
@@ -554,7 +558,7 @@ export const getGameUrl = async (params: {
     }
   } else {
     console.log('ℹ️ 使用旧游戏接口（未启用新接口）');
-  }
+  } */
   
   // 使用旧游戏接口（原有逻辑）
   // 根据Vue项目配置，使用GET请求，参数通过URL query传递

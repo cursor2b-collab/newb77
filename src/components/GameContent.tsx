@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { openGame, openNewGame } from '@/utils/gameUtils';
-import { newGameApiService } from '@/lib/api/newGameApi';
-import { getGameApiLanguage } from '@/utils/languageMapper';
+import { openGame } from '@/utils/gameUtils';
+import { useGames } from '@/contexts/GameContext';
+// import { openNewGame } from '@/utils/gameUtils';
+// import { newGameApiService } from '@/lib/api/newGameApi';
+// import { getGameApiLanguage } from '@/utils/languageMapper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
@@ -17,6 +19,7 @@ interface GameData {
 }
 
 export function GameContent() {
+  const { gamingList, loading: gamesLoading } = useGames(); // 从 GameContext 获取游戏列表
   const [gamesList, setGamesList] = useState<GameData[]>([]);
   const [loading, setLoading] = useState(true);
   const [bannerGames, setBannerGames] = useState<Array<{name: string; code: string; thumbnail: string}>>([]);
@@ -108,100 +111,100 @@ export function GameContent() {
     }
   ];
 
-  // 从新游戏接口获取电子游戏数据
-  useEffect(() => {
-    const fetchGames = async () => {
-      setLoading(true);
-      try {
-        // 1. 获取供应商列表
-        const vendorsResponse = await newGameApiService.getVendorsList();
-        let vendors: any[] = [];
-        
-        if (Array.isArray(vendorsResponse)) {
-          vendors = vendorsResponse;
-        } else if (vendorsResponse && vendorsResponse.message && Array.isArray(vendorsResponse.message)) {
-          vendors = vendorsResponse.message;
-        } else if (vendorsResponse && vendorsResponse.success && vendorsResponse.message) {
-          vendors = Array.isArray(vendorsResponse.message) ? vendorsResponse.message : [];
-        }
-        
-        // console.log('📋 获取到的供应商列表:', vendors);
-        
-        // 2. 筛选出老虎机类型的供应商（type === 2）
-        const slotVendors = vendors.filter((v: any) => v.type === 2).slice(0, 3); // 最多获取3个供应商
-        
-        if (slotVendors.length === 0) {
-          console.warn('⚠️ 没有找到老虎机类型的供应商');
-          setGamesList([]);
-          return;
-        }
-        
-        // 3. 获取当前语言代码（映射到游戏接口语言代码）
-        const gameApiLanguage = getGameApiLanguage();
-        // console.log('🌐 使用游戏接口语言代码:', gameApiLanguage);
-        
-        // 4. 并行获取每个供应商的游戏列表
-        const gamesPromises = slotVendors.map(async (vendor: any) => {
-          try {
-            const gamesResponse = await newGameApiService.getGamesList(vendor.vendorCode, gameApiLanguage);
-            let games: any[] = [];
-            
-            if (Array.isArray(gamesResponse)) {
-              games = gamesResponse;
-            } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
-              games = gamesResponse.message;
-            } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
-              games = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
-            }
-            
-            // console.log(`✅ 供应商 ${vendor.vendorCode} 获取到 ${games.length} 个游戏`);
-            
-            // 格式化游戏数据
-            return games.slice(0, 4).map((game: any, index: number) => ({
-              id: `${vendor.vendorCode}-${game.gameCode || index}`,
-              src: game.thumbnail || game.imageUrl || '',
-              type: index < 2 ? 'big' as const : 'small' as const,
-              position: index,
-              platformName: vendor.vendorCode, // 使用vendorCode作为platformName
-              gameType: 3, // 电子游戏类型
-              gameCode: game.gameCode || 'lobby',
-              vendorCode: vendor.vendorCode,
-              gameName: game.gameName || game.name || ''
-            }));
-          } catch (error) {
-            console.error(`获取供应商 ${vendor.vendorCode} 的游戏失败:`, error);
-            return [];
-          }
-        });
-        
-        // 5. 等待所有请求完成
-        const gamesResults = await Promise.all(gamesPromises);
-        const allGames = gamesResults.flat();
-        
-        // 6. 取前4个游戏显示
-        const displayGames = allGames.slice(0, 4).map((game, index) => ({
-          ...game,
-          id: index + 1,
-          position: index
-        }));
-        
-        if (displayGames.length > 0) {
-          setGamesList(displayGames);
-          // console.log('✅ 成功获取电子游戏列表，共', displayGames.length, '个游戏');
-        } else {
-          console.warn('⚠️ 没有获取到游戏数据');
-          setGamesList([]);
-        }
-      } catch (error) {
-        console.error('❌ 获取电子游戏列表失败:', error);
-        setGamesList([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchGames();
-  }, []);
+  // 从新游戏接口获取电子游戏数据 - 已注释（新游戏API调用已全部注释掉）
+  // useEffect(() => {
+  //   const fetchGames = async () => {
+  //     setLoading(true);
+  //     try {
+  //       // 1. 获取供应商列表
+  //       const vendorsResponse = await newGameApiService.getVendorsList();
+  //       let vendors: any[] = [];
+  //       
+  //       if (Array.isArray(vendorsResponse)) {
+  //         vendors = vendorsResponse;
+  //       } else if (vendorsResponse && vendorsResponse.message && Array.isArray(vendorsResponse.message)) {
+  //         vendors = vendorsResponse.message;
+  //       } else if (vendorsResponse && vendorsResponse.success && vendorsResponse.message) {
+  //         vendors = Array.isArray(vendorsResponse.message) ? vendorsResponse.message : [];
+  //       }
+  //       
+  //       // console.log('📋 获取到的供应商列表:', vendors);
+  //       
+  //       // 2. 筛选出老虎机类型的供应商（type === 2）
+  //       const slotVendors = vendors.filter((v: any) => v.type === 2).slice(0, 3); // 最多获取3个供应商
+  //       
+  //       if (slotVendors.length === 0) {
+  //         console.warn('⚠️ 没有找到老虎机类型的供应商');
+  //         setGamesList([]);
+  //         return;
+  //       }
+  //       
+  //       // 3. 获取当前语言代码（映射到游戏接口语言代码）
+  //       const gameApiLanguage = getGameApiLanguage();
+  //       // console.log('🌐 使用游戏接口语言代码:', gameApiLanguage);
+  //       
+  //       // 4. 并行获取每个供应商的游戏列表
+  //       const gamesPromises = slotVendors.map(async (vendor: any) => {
+  //         try {
+  //           const gamesResponse = await newGameApiService.getGamesList(vendor.vendorCode, gameApiLanguage);
+  //           let games: any[] = [];
+  //           
+  //           if (Array.isArray(gamesResponse)) {
+  //             games = gamesResponse;
+  //           } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
+  //             games = gamesResponse.message;
+  //           } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
+  //             games = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
+  //           }
+  //           
+  //           // console.log(`✅ 供应商 ${vendor.vendorCode} 获取到 ${games.length} 个游戏`);
+  //           
+  //           // 格式化游戏数据
+  //           return games.slice(0, 4).map((game: any, index: number) => ({
+  //             id: `${vendor.vendorCode}-${game.gameCode || index}`,
+  //             src: game.thumbnail || game.imageUrl || '',
+  //             type: index < 2 ? 'big' as const : 'small' as const,
+  //             position: index,
+  //             platformName: vendor.vendorCode, // 使用vendorCode作为platformName
+  //             gameType: 3, // 电子游戏类型
+  //             gameCode: game.gameCode || 'lobby',
+  //             vendorCode: vendor.vendorCode,
+  //             gameName: game.gameName || game.name || ''
+  //           }));
+  //         } catch (error) {
+  //           console.error(`获取供应商 ${vendor.vendorCode} 的游戏失败:`, error);
+  //           return [];
+  //         }
+  //       });
+  //       
+  //       // 5. 等待所有请求完成
+  //       const gamesResults = await Promise.all(gamesPromises);
+  //       const allGames = gamesResults.flat();
+  //       
+  //       // 6. 取前4个游戏显示
+  //       const displayGames = allGames.slice(0, 4).map((game, index) => ({
+  //         ...game,
+  //         id: index + 1,
+  //         position: index
+  //       }));
+  //       
+  //       if (displayGames.length > 0) {
+  //         setGamesList(displayGames);
+  //         // console.log('✅ 成功获取电子游戏列表，共', displayGames.length, '个游戏');
+  //       } else {
+  //         console.warn('⚠️ 没有获取到游戏数据');
+  //         setGamesList([]);
+  //       }
+  //     } catch (error) {
+  //       console.error('❌ 获取电子游戏列表失败:', error);
+  //       setGamesList([]);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   
+  //   fetchGames();
+  // }, []);
 
   // 横幅游戏自定义图片配置（如果设置了自定义图片，将优先使用自定义图片）
   const bannerGamesCustomImages: Record<string, string> = {
@@ -210,12 +213,12 @@ export function GameContent() {
     'vs20fruitsw': 'https://ik.imagekit.io/gpbvknoim/fd4.avif',     // 甜入心扉
   };
 
-  // 获取横幅游戏封面
-  useEffect(() => {
-    const fetchBannerGames = async () => {
-      try {
-        const gameApiLanguage = getGameApiLanguage();
-        const gamesResponse = await newGameApiService.getGamesList('slot-pragmatic', gameApiLanguage);
+  // 获取横幅游戏封面 - 已注释
+  // useEffect(() => {
+  //   const fetchBannerGames = async () => {
+  //     try {
+  //       const gameApiLanguage = getGameApiLanguage();
+  //       const gamesResponse = await newGameApiService.getGamesList('slot-pragmatic', gameApiLanguage);
         let games: any[] = [];
         
         if (Array.isArray(gamesResponse)) {
@@ -257,91 +260,91 @@ export function GameContent() {
     };
 
     fetchBannerGames();
-  }, []);
+  }, []); */
 
-  // 获取捕鱼游戏数据
-  useEffect(() => {
-    const fetchFishingGames = async () => {
-      setFishingGamesLoading(true);
-      try {
-        // 1. 获取供应商列表
-        const vendorsResponse = await newGameApiService.getVendorsList();
-        let vendors: any[] = [];
-        
-        if (Array.isArray(vendorsResponse)) {
-          vendors = vendorsResponse;
-        } else if (vendorsResponse && vendorsResponse.message && Array.isArray(vendorsResponse.message)) {
-          vendors = vendorsResponse.message;
-        } else if (vendorsResponse && vendorsResponse.success && vendorsResponse.message) {
-          vendors = Array.isArray(vendorsResponse.message) ? vendorsResponse.message : [];
-        }
-        
-        // 2. 筛选出捕鱼类型的供应商（vendorCode 以 fishing- 开头）
-        const fishingVendors = vendors.filter((v: any) => 
-          v.vendorCode && v.vendorCode.startsWith('fishing-')
-        );
-        
-        if (fishingVendors.length === 0) {
-          console.warn('⚠️ 没有找到捕鱼类型的供应商');
-          setFishingGames([]);
-          setFishingGamesLoading(false);
-          return;
-        }
-        
-        // 3. 获取当前语言代码
-        const gameApiLanguage = getGameApiLanguage();
-        
-        // 4. 并行获取每个供应商的游戏列表
-        const gamesPromises = fishingVendors.map(async (vendor: any) => {
-          try {
-            const gamesResponse = await newGameApiService.getGamesList(vendor.vendorCode, gameApiLanguage);
-            let games: any[] = [];
-            
-            if (Array.isArray(gamesResponse)) {
-              games = gamesResponse;
-            } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
-              games = gamesResponse.message;
-            } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
-              games = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
-            }
-            
-            // 供应商代码到显示名称的映射
-            const providerMap: Record<string, string> = {
-              'fishing-jdb': 'JDB',
-              'fishing-cq9': 'CQ9',
-              'fishing-pg': 'PA',
-              'fishing-pgsoft': 'PA'
-            };
-            
-            return games.slice(0, 10).map((game: any) => ({
-              id: `${vendor.vendorCode}-${game.gameCode}`,
-              name: game.gameName || game.name || '',
-              thumbnail: game.thumbnail || game.imageUrl || '',
-              vendorCode: vendor.vendorCode,
-              gameCode: game.gameCode || 'lobby',
-              provider: providerMap[vendor.vendorCode] || vendor.vendorCode.replace('fishing-', '').toUpperCase()
-            }));
-          } catch (error) {
-            console.error(`获取供应商 ${vendor.vendorCode} 的捕鱼游戏失败:`, error);
-            return [];
-          }
-        });
-        
-        // 5. 等待所有请求完成
-        const gamesResults = await Promise.all(gamesPromises);
-        const allGames = gamesResults.flat();
-        
-        setFishingGames(allGames);
-      } catch (error) {
-        console.error('❌ 获取捕鱼游戏列表失败:', error);
-        setFishingGames([]);
-      } finally {
-        setFishingGamesLoading(false);
-      }
-    };
-    
-    fetchFishingGames();
-  }, []);
+  // 获取捕鱼游戏数据 - 已注释（新游戏API调用已全部注释掉）
+  // useEffect(() => {
+  //   const fetchFishingGames = async () => {
+  //     setFishingGamesLoading(true);
+  //     try {
+  //       // 1. 获取供应商列表
+  //       const vendorsResponse = await newGameApiService.getVendorsList();
+  //       let vendors: any[] = [];
+  //       
+  //       if (Array.isArray(vendorsResponse)) {
+  //         vendors = vendorsResponse;
+  //       } else if (vendorsResponse && vendorsResponse.message && Array.isArray(vendorsResponse.message)) {
+  //         vendors = vendorsResponse.message;
+  //       } else if (vendorsResponse && vendorsResponse.success && vendorsResponse.message) {
+  //         vendors = Array.isArray(vendorsResponse.message) ? vendorsResponse.message : [];
+  //       }
+  //       
+  //       // 2. 筛选出捕鱼类型的供应商（vendorCode 以 fishing- 开头）
+  //       const fishingVendors = vendors.filter((v: any) => 
+  //         v.vendorCode && v.vendorCode.startsWith('fishing-')
+  //       );
+  //       
+  //       if (fishingVendors.length === 0) {
+  //         console.warn('⚠️ 没有找到捕鱼类型的供应商');
+  //         setFishingGames([]);
+  //         setFishingGamesLoading(false);
+  //         return;
+  //       }
+  //       
+  //       // 3. 获取当前语言代码
+  //       const gameApiLanguage = getGameApiLanguage();
+  //       
+  //       // 4. 并行获取每个供应商的游戏列表
+  //       const gamesPromises = fishingVendors.map(async (vendor: any) => {
+  //         try {
+  //           const gamesResponse = await newGameApiService.getGamesList(vendor.vendorCode, gameApiLanguage);
+  //           let games: any[] = [];
+  //           
+  //           if (Array.isArray(gamesResponse)) {
+  //             games = gamesResponse;
+  //           } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
+  //             games = gamesResponse.message;
+  //           } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
+  //             games = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
+  //           }
+  //           
+  //           // 供应商代码到显示名称的映射
+  //           const providerMap: Record<string, string> = {
+  //             'fishing-jdb': 'JDB',
+  //             'fishing-cq9': 'CQ9',
+  //             'fishing-pg': 'PA',
+  //             'fishing-pgsoft': 'PA'
+  //           };
+  //           
+  //           return games.slice(0, 10).map((game: any) => ({
+  //             id: `${vendor.vendorCode}-${game.gameCode}`,
+  //             name: game.gameName || game.name || '',
+  //             thumbnail: game.thumbnail || game.imageUrl || '',
+  //             vendorCode: vendor.vendorCode,
+  //             gameCode: game.gameCode || 'lobby',
+  //             provider: providerMap[vendor.vendorCode] || vendor.vendorCode.replace('fishing-', '').toUpperCase()
+  //           }));
+  //         } catch (error) {
+  //           console.error(`获取供应商 ${vendor.vendorCode} 的捕鱼游戏失败:`, error);
+  //           return [];
+  //         }
+  //       });
+  //       
+  //       // 5. 等待所有请求完成
+  //       const gamesResults = await Promise.all(gamesPromises);
+  //       const allGames = gamesResults.flat();
+  //       
+  //       setFishingGames(allGames);
+  //     } catch (error) {
+  //       console.error('❌ 获取捕鱼游戏列表失败:', error);
+  //       setFishingGames([]);
+  //     } finally {
+  //       setFishingGamesLoading(false);
+  //     }
+  //   };
+  //   
+  //   fetchFishingGames();
+  // }, []);
 
   // 格式化显示的游戏数据
   const displayGames = gamesList.length > 0 
@@ -931,7 +934,10 @@ export function GameContent() {
                 <SwiperSlide key={game.id} className="fishing-game-slide">
                   <div 
                     className="fishing-game-item"
-                    onClick={() => openNewGame(game.vendorCode, game.gameCode, 2)}
+                    onClick={() => {
+                      // 使用旧接口启动捕鱼游戏
+                      openGame(game.provider || 'JDB', 3, game.gameCode);
+                    }}
                   >
                     <div className="fishing-game-cover-wrapper">
                       <img 

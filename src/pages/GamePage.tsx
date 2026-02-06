@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getGameUrl, gameTransferOut, shouldUseNewGameApi, getUserId, mapApiCodeToVendorCode } from '@/lib/api/game';
-import { newGameApiService } from '@/lib/api/newGameApi';
+// import { newGameApiService } from '@/lib/api/newGameApi';
 import { useAuth } from '@/contexts/AuthContext';
 import Loader from '@/components/Loader';
 import { PageLoader } from '@/components/PageLoader';
@@ -67,11 +67,12 @@ export default function GamePage() {
         return;
       }
 
-      // 如果使用新游戏接口（有 vendorCode），直接使用新接口
+      // 如果使用新游戏接口（有 vendorCode），直接使用新接口 - 已全部注释
       // 注意：新接口只支持真人（gameType=1）和电游（gameType=2,3），不支持体育、彩票、棋牌
       // 如果 gameType 是 4（彩票）、5（体育）、6（棋牌），即使有 vendorCode 也不使用新接口
-      const isNewApiSupportedGameType = gameType === 1 || gameType === 2 || gameType === 3 || gameType === 0;
-      if (vendorCode && isNewApiSupportedGameType) {
+      // const isNewApiSupportedGameType = gameType === 1 || gameType === 2 || gameType === 3 || gameType === 0;
+      // if (vendorCode && isNewApiSupportedGameType) {
+      /* if (false) { // 新游戏API调用已全部注释掉
         try {
           isLoadingRef.current = true;
           setLoading(true);
@@ -264,7 +265,7 @@ export default function GamePage() {
           isLoadingRef.current = false;
           return;
         }
-      }
+      } */ // 新游戏API调用已全部注释掉
 
       if (!platformName) {
         console.error('❌ 缺少游戏平台参数');
@@ -379,22 +380,23 @@ export default function GamePage() {
       hasTransferredOut.current = true;
       console.log('🔄 开始转出余额:', { platformName, vendorCode });
       
-      // 优先检查是否有 vendorCode（新游戏接口）
+      // 优先检查是否有 vendorCode（新游戏接口）- 已注释
       // 如果有 vendorCode，直接使用新接口转出
-      if (vendorCode) {
-        console.log('✅ 使用新游戏接口转出（vendorCode）:', vendorCode);
-        try {
-          // 获取用户ID
-          const userId = await getUserId();
-          if (!userId) {
-            console.warn('⚠️ 无法获取用户ID，无法转出');
-            return;
-          }
-          
-          console.log('🔄 调用 withdrawAll:', { userId, vendorCode });
-          
-          // 使用 withdrawAll 转出所有余额
-          const withdrawResponse = await newGameApiService.withdrawAll(userId, vendorCode);
+      // if (vendorCode) {
+      if (false) { // 新游戏API调用已全部注释掉
+        // console.log('✅ 使用新游戏接口转出（vendorCode）:', vendorCode);
+        // try {
+        //   // 获取用户ID
+        //   const userId = await getUserId();
+        //   if (!userId) {
+        //     console.warn('⚠️ 无法获取用户ID，无法转出');
+        //     return;
+        //   }
+        //   
+        //   console.log('🔄 调用 withdrawAll:', { userId, vendorCode });
+        //   
+        //   // 使用 withdrawAll 转出所有余额
+        //   const withdrawResponse = await newGameApiService.withdrawAll(userId, vendorCode);
           
           console.log('📊 withdrawAll 响应:', withdrawResponse);
           
@@ -425,42 +427,42 @@ export default function GamePage() {
           });
         }
         return;
-      }
+      } */
       
-      // 如果没有 vendorCode，检查是否使用新游戏接口
+      // 如果没有 vendorCode，检查是否使用新游戏接口 - 已注释
       // 注意：新接口只支持真人（gameType=1）和电游（gameType=2,3），不支持体育、彩票、棋牌
       // PA、AG、BG 强制使用旧接口
-      const apiCode = platformName.replace(/[^0-9a-z]/gi, '').toUpperCase();
-      const isPA = apiCode === 'PA';
-      const isAG = apiCode === 'AG';
-      const isBG = apiCode === 'BG';
-      const isNewApiSupportedGameType = gameType === 1 || gameType === 2 || gameType === 3 || gameType === 0;
-      const useNewApi = shouldUseNewGameApi() && isNewApiSupportedGameType && !isPA && !isAG && !isBG;
-      
-      if (useNewApi && platformName) {
-        console.log('✅ 使用新游戏接口转出（通过映射）');
-        // 使用新游戏接口转出余额
-        try {
-          // 获取用户ID
-          const userId = await getUserId();
-          if (!userId) {
-            console.warn('⚠️ 无法获取用户ID，使用旧接口转出');
-            const res = await gameTransferOut(platformName);
-            if (res.code === 200 || res.status === 'success') {
-              if (refreshUserInfo) {
-                await refreshUserInfo(true);
-              }
-            }
-            return;
-          }
-          
-          // 映射平台代码到vendorCode
-          const mappedVendorCode = mapApiCodeToVendorCode(apiCode);
-          
-          console.log('🔄 调用 withdrawAll（映射）:', { userId, vendorCode: mappedVendorCode, apiCode });
-          
-          // 使用 withdrawAll 转出所有余额
-          const withdrawResponse = await newGameApiService.withdrawAll(userId, mappedVendorCode);
+      // const apiCode = platformName.replace(/[^0-9a-z]/gi, '').toUpperCase();
+      // const isPA = apiCode === 'PA';
+      // const isAG = apiCode === 'AG';
+      // const isBG = apiCode === 'BG';
+      // const isNewApiSupportedGameType = gameType === 1 || gameType === 2 || gameType === 3 || gameType === 0;
+      // const useNewApi = shouldUseNewGameApi() && isNewApiSupportedGameType && !isPA && !isAG && !isBG;
+      // 
+      // if (useNewApi && platformName) {
+      //   console.log('✅ 使用新游戏接口转出（通过映射）');
+      //   // 使用新游戏接口转出余额
+      //   try {
+      //     // 获取用户ID
+      //     const userId = await getUserId();
+      //     if (!userId) {
+      //       console.warn('⚠️ 无法获取用户ID，使用旧接口转出');
+      //       const res = await gameTransferOut(platformName);
+      //       if (res.code === 200 || res.status === 'success') {
+      //         if (refreshUserInfo) {
+      //           await refreshUserInfo(true);
+      //         }
+      //       }
+      //       return;
+      //     }
+      //     
+      //     // 映射平台代码到vendorCode
+      //     const mappedVendorCode = mapApiCodeToVendorCode(apiCode);
+      //     
+      //     console.log('🔄 调用 withdrawAll（映射）:', { userId, vendorCode: mappedVendorCode, apiCode });
+      //     
+      //     // 使用 withdrawAll 转出所有余额
+      //     const withdrawResponse = await newGameApiService.withdrawAll(userId, mappedVendorCode);
           
           console.log('📊 withdrawAll 响应（映射）:', withdrawResponse);
           

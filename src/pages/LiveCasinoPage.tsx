@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { newGameApiService } from '@/lib/api/newGameApi';
-import { getGameApiLanguage } from '@/utils/languageMapper';
-import { openNewGame } from '@/utils/gameUtils';
+// import { newGameApiService } from '@/lib/api/newGameApi';
+// import { getGameApiLanguage } from '@/utils/languageMapper';
+import { openGame } from '@/utils/gameUtils';
+// import { openNewGame } from '@/utils/gameUtils';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { PageLoader } from '@/components/PageLoader';
 
@@ -62,89 +63,89 @@ export function LiveCasinoPage() {
     return casinoVendors.filter((v: any) => v.vendorCode === tab);
   };
 
-  // 获取供应商列表
-  useEffect(() => {
-    const fetchVendors = async () => {
-      try {
-        const vendorsResponse = await newGameApiService.getVendorsList();
-        let vendors: any[] = [];
-        
-        if (Array.isArray(vendorsResponse)) {
-          vendors = vendorsResponse;
-        } else if (vendorsResponse && vendorsResponse.message && Array.isArray(vendorsResponse.message)) {
-          vendors = vendorsResponse.message;
-        } else if (vendorsResponse && vendorsResponse.success && vendorsResponse.message) {
-          vendors = Array.isArray(vendorsResponse.message) ? vendorsResponse.message : [];
-        }
+  // 获取供应商列表 - 已注释（新游戏API调用已全部注释掉）
+  // useEffect(() => {
+  //   const fetchVendors = async () => {
+  //     try {
+  //       const vendorsResponse = await newGameApiService.getVendorsList();
+  //       let vendors: any[] = [];
+  //       
+  //       if (Array.isArray(vendorsResponse)) {
+  //         vendors = vendorsResponse;
+  //       } else if (vendorsResponse && vendorsResponse.message && Array.isArray(vendorsResponse.message)) {
+  //         vendors = vendorsResponse.message;
+  //       } else if (vendorsResponse && vendorsResponse.success && vendorsResponse.message) {
+  //         vendors = Array.isArray(vendorsResponse.message) ? vendorsResponse.message : [];
+  //       }
+  //
+  //       setAllVendors(vendors);
+  //     } catch (error) {
+  //       console.error('获取供应商列表失败:', error);
+  //       setAllVendors([]);
+  //     }
+  //   };
+  //
+  //   fetchVendors();
+  // }, []);
 
-        setAllVendors(vendors);
-      } catch (error) {
-        console.error('获取供应商列表失败:', error);
-        setAllVendors([]);
-      }
-    };
-
-    fetchVendors();
-  }, []);
-
-  // 获取游戏列表
-  useEffect(() => {
-    const fetchGames = async () => {
-      if (allVendors.length === 0) return;
-      
-      setLoading(true);
-      try {
-        const gameApiLanguage = getGameApiLanguage();
-        const filteredVendors = getFilteredVendors(activeTab, allVendors);
-        const vendorsToFetch = filteredVendors;
-
-        const gamesPromises = vendorsToFetch.map(async (vendor: any) => {
-          try {
-            const gamesResponse = await newGameApiService.getGamesList(vendor.vendorCode, gameApiLanguage);
-            let vendorGames: any[] = [];
-            
-            if (Array.isArray(gamesResponse)) {
-              vendorGames = gamesResponse;
-            } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
-              vendorGames = gamesResponse.message;
-            } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
-              vendorGames = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
-            }
-
-            return vendorGames.map((game: any) => ({
-              id: `${vendor.vendorCode}-${game.gameCode}`,
-              name: game.gameName || game.name || '',
-              thumbnail: game.thumbnail || game.imageUrl || '',
-              provider: game.provider || vendor.name || vendorNameMap[vendor.vendorCode] || '',
-              vendorCode: vendor.vendorCode,
-              gameCode: game.gameCode || 'lobby',
-              vendorType: vendor.type,
-              isNew: game.isNew || false,
-              hasJackpot: false
-            }));
-          } catch (error: any) {
-            console.error(`获取供应商 ${vendor.vendorCode} 的游戏失败:`, error);
-            return [];
-          }
-        });
-
-        const gamesResults = await Promise.all(gamesPromises);
-        const allGames = gamesResults.flat();
-        setAllGamesData(allGames);
-        setDisplayedGamesCount(12);
-        requestAnimationFrame(() => {
-          setGames(allGames.slice(0, 12));
-          setLoading(false);
-        });
-      } catch (error) {
-        console.error('获取游戏列表失败:', error);
-        setGames([]);
-        setLoading(false);
-      }
-    };
-
-    fetchGames();
-  }, [activeTab, allVendors]);
+  // 获取游戏列表 - 已注释（新游戏API调用已全部注释掉）
+  // useEffect(() => {
+  //   const fetchGames = async () => {
+  //     if (allVendors.length === 0) return;
+  //     
+  //     setLoading(true);
+  //     try {
+  //       const gameApiLanguage = getGameApiLanguage();
+  //       const filteredVendors = getFilteredVendors(activeTab, allVendors);
+  //       const vendorsToFetch = filteredVendors;
+  //
+  //       const gamesPromises = vendorsToFetch.map(async (vendor: any) => {
+  //         try {
+  //           const gamesResponse = await newGameApiService.getGamesList(vendor.vendorCode, gameApiLanguage);
+  //           let vendorGames: any[] = [];
+  //           
+  //           if (Array.isArray(gamesResponse)) {
+  //             vendorGames = gamesResponse;
+  //           } else if (gamesResponse && gamesResponse.message && Array.isArray(gamesResponse.message)) {
+  //             vendorGames = gamesResponse.message;
+  //           } else if (gamesResponse && gamesResponse.success && gamesResponse.message) {
+  //             vendorGames = Array.isArray(gamesResponse.message) ? gamesResponse.message : [];
+  //           }
+  //
+  //           return vendorGames.map((game: any) => ({
+  //             id: `${vendor.vendorCode}-${game.gameCode}`,
+  //             name: game.gameName || game.name || '',
+  //             thumbnail: game.thumbnail || game.imageUrl || '',
+  //             provider: game.provider || vendor.name || vendorNameMap[vendor.vendorCode] || '',
+  //             vendorCode: vendor.vendorCode,
+  //             gameCode: game.gameCode || 'lobby',
+  //             vendorType: vendor.type,
+  //             isNew: game.isNew || false,
+  //             hasJackpot: false
+  //           }));
+  //         } catch (error: any) {
+  //           console.error(`获取供应商 ${vendor.vendorCode} 的游戏失败:`, error);
+  //           return [];
+  //         }
+  //       });
+  //
+  //       const gamesResults = await Promise.all(gamesPromises);
+  //       const allGames = gamesResults.flat();
+  //       setAllGamesData(allGames);
+  //       setDisplayedGamesCount(12);
+  //       requestAnimationFrame(() => {
+  //         setGames(allGames.slice(0, 12));
+  //         setLoading(false);
+  //       });
+  //     } catch (error) {
+  //       console.error('获取游戏列表失败:', error);
+  //       setGames([]);
+  //       setLoading(false);
+  //     }
+  //   };
+  //
+  //   fetchGames();
+  // }, [activeTab, allVendors]);
 
   // 加载更多游戏
   const loadMoreGames = async () => {
@@ -389,7 +390,20 @@ export function LiveCasinoPage() {
                 <div
                   key={game.id}
                   className="live-casino-game-card"
-                  onClick={() => openNewGame(game.vendorCode, game.gameCode, 1)}
+                  onClick={() => {
+                    // 新游戏API调用已注释，使用旧接口
+                    // openNewGame(game.vendorCode, game.gameCode, 1);
+                    // 注意：需要将 vendorCode 映射回平台代码
+                    const platformMap: Record<string, string> = {
+                      'casino-evolution': 'AG',
+                      'casino-sa': 'SA',
+                      'casino-playace': 'PL',
+                      'casino-micro': 'MG',
+                      'casino-mg': 'MG'
+                    };
+                    const platformName = platformMap[game.vendorCode] || 'AG';
+                    openGame(platformName, 1, game.gameCode);
+                  }}
                 >
                   <ImageWithFallback
                     src={game.thumbnail}

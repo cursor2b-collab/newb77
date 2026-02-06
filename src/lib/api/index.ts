@@ -15,6 +15,6 @@ export * from './message';
 export * from './team';
 export * from './favor';
 export * from './password';
-export * from './newGameApi';
+// export * from './newGameApi'; // 新游戏API调用已全部注释掉
 export { default as apiClient } from './client';
 

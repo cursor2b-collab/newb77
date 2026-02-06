@@ -978,7 +978,7 @@ const languages: Language[] = [
               }}
             >
               <img
-                src="https://www.xpj00000.vip/loginImg/tour.png"
+                src="https://ik.imagekit.io/gpbvknoim/gg.avif"
                 alt="tour"
                 style={{ width: '20px', height: '20px' }}
               />
@@ -1003,7 +1003,7 @@ const languages: Language[] = [
               }}
             >
               <img
-                src="https://www.xpj00000.vip/loginImg/service.png"
+                src="https://ik.imagekit.io/gpbvknoim/kfsy.avif"
                 alt="service"
                 style={{ width: '20px', height: '20px' }}
               />

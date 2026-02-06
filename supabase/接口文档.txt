@@ -1,0 +1,699 @@
+
+美盛接口文档
+所有接口统一使用POST方式，Content-Type: application/x-www-form-urlencoded;
+API 错误返回值说明
+错误返回示例
+
+{"Code":10,"Message":"api_code error"}
+Code 状态码
+Code 	描述 	说明
+0 	成功 	成功
+-1 	未知错误 	具体看返回的错误信息
+10 	api_code error 	一般api_code错误导致
+11 	Merchant api_code error 	一般api_code错误导致
+33 	Member already exists 	会员已存在
+34 	No user exists, please register 	会员未注册
+35 	Order No. already exists 	订单号重复
+56 	Insufficient merchant balance 	商户额度不足
+999 	Merchant or key error 	商户或key错误
+1000 	Interface maintenance 	部分为维护信息
+9999 	IP not authorized 	IP未授权
+游戏API对接
+游戏API对接 | 会员注册账号
+post
+
+http://api.xxx.com/ley/register
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：AG,BBIN
+username 	String 	
+
+注册会员账号
+password 	String 	
+
+注册会员密码
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+	          "username":"123456"
+          },
+      }
+
+游戏API对接 | 会员登陆游戏
+post
+
+http://api.xxx.com/ley/login
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：AG,BBIN
+username 	String 	
+
+注册时会员账号
+gameType 	String 	
+
+游戏类型，参考通用规则
+gameCode 	String 	
+
+子游戏代码，参考通用规则
+isMobile 	Integer 	
+
+电脑版 and 手机版，0 电脑板 1手机版 默认 0
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+	          "url":"https://www.baidu.com"
+          },
+      }
+
+游戏API对接 | 查询会员余额
+post
+
+http://api.xxx.com/ley/balance
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：AG,BBIN
+username 	String 	
+
+注册时会员账号
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+	          "balance":0
+          },
+      }
+
+游戏API对接 | 查询转账状态
+post
+
+http://api.xxx.com/ley/orderstatus
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：AG,BBIN
+username 	String 	
+
+会员账号
+transferno 	String 	
+
+转账订单号
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+	          "transferno":"123456",
+            "status": "success"
+          },
+      }
+
+游戏API对接 | 获取商户额度
+post
+
+http://api.xxx.com/ley/credit
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：通用分商户传固定参数 "CURRENCY"
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+	          "name":"AG视讯"
+              "code":"AG"
+              "money":1000
+          },
+      }
+
+游戏API对接 | 获取游戏列表
+post
+
+http://api.xxx.com/ley/gamelist
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：AG,BBIN
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+  code 	String 	
+
+游戏代码
+  name 	String 	
+
+游戏名称
+  en_name 	String 	
+
+英文名称
+  gameType 	String 	
+
+游戏类型：1真人,2捕鱼,3电子,4彩票,5体育,6棋牌,7电竞
+  gameCode 	String 	
+
+代码参数
+  img 	String 	
+
+图片链接
+  special 	String 	
+
+附加参数
+  terminal 	String 	
+
+适用平台 0 全平台 1 pc 2 移动端
+  status 	String 	
+
+游戏状态：1启用 2关闭
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+               "gamelist":[{
+	                   "code": "OB"
+                       "en_name": null
+                       "gameCode": "1"
+                       "gameType": "3"
+                       "id": 1
+                       "img": "http://106.55.245.4:81/img/ob/1.jpg"
+                       "name": "赤壁之战"
+                       "special": null
+                       "status": "1"
+                       "terminal": "0"
+	
+               }]
+          },
+      }
+
+游戏API对接 | 获取游戏记录
+
+采集开始时间最少间隔5分钟（300秒），最大为请求时间之前的七天
+
+post
+
+http://api.xxx.com/ley/gamerecord
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+method 	String 	
+
+updateTime 根据修改时间采集，betTime 根据投注时间采集
+page 	Integer 	
+
+页数
+pageSize 	Integer 	
+
+每页条数，每页最大500条
+start_at 	Integer 	
+
+开始时间，十位时间戳1602333908
+end_at 	Integer 	
+
+结束时间，十位时间戳1602852308
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+  total_count 	Integer 	
+
+总条数
+  lastPage 	Integer 	
+
+总页数
+  pageSize 	Integer 	
+
+每页条数
+  page 	Integer 	
+
+第几页
+  data 	array 	
+
+注单内容
+    id 	Integer 	
+
+注单ID
+    rowid 	string 	
+
+注单单号
+    billNo 	string 	
+
+注单流水号
+    code 	string 	
+
+游戏代码
+    username 	string 	
+
+会员账号
+    playName 	string 	
+
+会员游戏账号
+    gameType 	string 	
+
+游戏类型：1真人,2捕鱼,3电子,4彩票,5体育,6棋牌,7电竞
+    playType 	string 	
+
+游戏玩法
+    xzhm 	string 	
+
+投注内容
+    Odds 	string 	
+
+赔率
+    tableCode 	string 	
+
+桌号
+    roundNo 	string 	
+
+局号，期号，赛事编号
+    betAmount 	string 	
+
+投注金额
+    validBetAmount 	string 	
+
+有效投注金额
+    netAmount 	string 	
+
+输赢结果，不包含本金
+    status 	Integer 	
+
+结算状态：1已结算，2未结算，3无效订单，4已退款
+    Lottery_results 	Integer 	
+
+开奖结果
+    betTime 	Integer 	
+
+投注时间
+    updateTime 	Integer 	
+
+注单修改时间
+    result 	Integer 	
+
+注单详细信息
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+	    "Code":0,
+		"Message":"成功",
+		"Data":
+		    {
+				"total_count":8,
+				"lastPage":4,
+				"pageSize":"2",
+				"page":"2",
+				"data":[{
+					"id":1793805,
+					"rowid":"1210627807831229",
+					"billNo":"2021101708273880136788",
+					"code":"OB",
+					"username":"a3212",
+					"playName":"asa3212",
+					"gameType":5,
+					"playType":"西班牙甲级联赛(阿拉维斯 v 皇家贝蒂斯)",
+					"xzhm":"全场独赢",
+					"Odds":"1.84",
+					"tableCode":null,
+					"roundNo":"1198139",
+					"betAmount":"20.00",
+					"validBetAmount":"20.00",
+					"netAmount":"-20",
+					"status":1,
+					"Lottery_results":null,
+					"betTime":1634453258,
+					"updateTime":0,
+					"result":"{\"commonProp\":{\"id\":\"1210627807831229\",\"gameTypeId\":\"-1\",\"gameTypeName\":\"\",\"roundId\":\"-1\",\"roundNo\":\"\",\"tableCode\":\"\",\"platformName\":\"\",\"platformId\":\"-1\",\"seriesId\":-1,\"seriesName\":\"\",\"betAmount\":\"20.0000\",\"validBetAmount\":\"20.0000\",\"netAmount\":\"0.0000\",\"pumpingAmount\":\"0.0000\",\"payAmount\":\"0.0000\",\"beforeAmount\":\"0.0000\",\"currency\":\"CNY\",\"createAt\":1634453258695,\"netAt\":0,\"recalcuAt\":0,\"updatedAt\":0,\"matchStartTime\":0,\"cancelAt\":0,\"riskUnlockAt\":0,\"playerName\":\"asa3212\",\"nickName\":\"\",\"playerId\":\"-1\",\"deviceType\":-1,\"loginIp\":\"\",\"agentCode\":\"765914\",\"agentId\":\"-1\",\"agentName\":\"\",\"parentAgentId\":\"-1\",\"parentAgentCode\":\"\",\"betStatus\":0,\"orderType\":0,\"cancelStatus\":0,\"cancelType\":0,\"signature\":\"\",\"tableName\":\"\",\"isTester\":0,\"playOptionsId\":null,\"playOptionName\":null,\"oddsValue\":null,\"settleScore\":null,\"playId\":-1,\"playName\":null,\"playLevelId\":\"\",\"playLevel\":\"\",\"dataSource\":\"ty\"},\"zrProp\":null,\"qpProp\":null,\"dyProp\":null,\"cpProp\":null,\"djProp\":null,\"tyProp\":{\"betCount\":1,\"betResult\":-1,\"seriesType\":1,\"seriesValue\":\"\\u5355\\u5173\",\"betNo\":null,\"matchId\":null,\"handiCap\":null,\"matchName\":null,\"matchInfo\":null,\"matchType\":null,\"sportId\":null,\"sportName\":null,\"tournamentId\":null,\"marketValue\":null,\"marketType\":null,\"beginTime\":null},\"betRecordList\":[{\"commonProp\":{\"id\":null,\"gameTypeId\":null,\"gameTypeName\":null,\"roundId\":null,\"roundNo\":null,\"tableCode\":null,\"platformName\":null,\"platformId\":null,\"seriesId\":null,\"seriesName\":null,\"betAmount\":\"20.0000\",\"validBetAmount\":null,\"netAmount\":null,\"pumpingAmount\":null,\"payAmount\":null,\"beforeAmount\":null,\"currency\":null,\"createAt\":null,\"netAt\":null,\"recalcuAt\":null,\"updatedAt\":null,\"matchStartTime\":null,\"cancelAt\":null,\"riskUnlockAt\":null,\"playerName\":null,\"nickName\":null,\"playerId\":null,\"deviceType\":null,\"loginIp\":null,\"agentCode\":null,\"agentId\":null,\"agentName\":null,\"parentAgentId\":null,\"parentAgentCode\":null,\"betStatus\":null,\"orderType\":null,\"cancelStatus\":null,\"cancelType\":null,\"signature\":null,\"tableName\":null,\"isTester\":null,\"playOptionsId\":140541404833505400,\"playOptionName\":\"\\u6d1b\\u6749\\u77f6FC  -0\\\/0.5\",\"oddsValue\":1.84,\"settleScore\":\"\",\"playId\":null,\"playName\":\"\\u5168\\u573a\\u8ba9\\u7403\",\"playLevelId\":null,\"playLevel\":null,\"dataSource\":null},\"zrProp\":null,\"qpProp\":null,\"dyProp\":null,\"cpProp\":null,\"djProp\":null,\"tyProp\":{\"betCount\":null,\"betResult\":\"0\",\"seriesType\":null,\"seriesValue\":null,\"betNo\":44926905705082,\"matchId\":1198139,\"handiCap\":-0.25,\"matchName\":\"\\u7f8e\\u56fd\\u804c\\u4e1a\\u5927\\u8054\\u76df\",\"matchInfo\":\"\\u6d1b\\u6749\\u77f6FC v \\u5723\\u4f55\\u585e\\u5730\\u9707\",\"matchType\":2,\"sportId\":1,\"sportName\":\"\\u8db3\\u7403\",\"tournamentId\":563,\"marketValue\":\"-0\\\/0.5\",\"marketType\":\"EU\",\"beginTime\":1634412600000},\"betRecordList\":null,\"imsbProp\":null,\"aeLotteryProp\":null,\"ebetProp\":null,\"ppsmProp\":null,\"ppcasnio\":null}],\"imsbProp\":null,\"aeLotteryProp\":null,\"ebetProp\":null,\"ppsmProp\":null,\"ppcasnio\":null}"},{"id":1793806,"rowid":"1169290563844699","billNo":"202110170827389084800","account_id":8,"username_id":8,"interface_id":5,"code":"OB","username":"a3212","playName":"asa3212","gameType":5,"playType":"\u7f8e\u56fd\u804c\u4e1a\u5927\u8054\u76df(\u6d1b\u6749\u77f6FC v \u5723\u4f55\u585e\u5730\u9707)","xzhm":"\u5168\u573a\u8ba9\u7403","Odds":"1.84","tableCode":null,"roundNo":"1198139","betAmount":"10.00","validBetAmount":"10.00","netAmount":"0.00","status":2,"Lottery_results":null,"betTime":1634453234,"updateTime":0,"result":"{\"commonProp\":{\"id\":\"1169290563844699\",\"gameTypeId\":\"-1\",\"gameTypeName\":\"\",\"roundId\":\"-1\",\"roundNo\":\"\",\"tableCode\":\"\",\"platformName\":\"\",\"platformId\":\"-1\",\"seriesId\":-1,\"seriesName\":\"\",\"betAmount\":\"10.0000\",\"validBetAmount\":\"10.0000\",\"netAmount\":\"0.0000\",\"pumpingAmount\":\"0.0000\",\"payAmount\":\"0.0000\",\"beforeAmount\":\"0.0000\",\"currency\":\"CNY\",\"createAt\":1634453234104,\"netAt\":0,\"recalcuAt\":0,\"updatedAt\":0,\"matchStartTime\":0,\"cancelAt\":0,\"riskUnlockAt\":0,\"playerName\":\"asa3212\",\"nickName\":\"\",\"playerId\":\"-1\",\"deviceType\":-1,\"loginIp\":\"\",\"agentCode\":\"765914\",\"agentId\":\"-1\",\"agentName\":\"\",\"parentAgentId\":\"-1\",\"parentAgentCode\":\"\",\"betStatus\":0,\"orderType\":0,\"cancelStatus\":0,\"cancelType\":0,\"signature\":\"\",\"tableName\":\"\",\"isTester\":0,\"playOptionsId\":null,\"playOptionName\":null,\"oddsValue\":null,\"settleScore\":null,\"playId\":-1,\"playName\":null,\"playLevelId\":\"\",\"playLevel\":\"\",\"dataSource\":\"ty\"},\"zrProp\":null,\"qpProp\":null,\"dyProp\":null,\"cpProp\":null,\"djProp\":null,\"tyProp\":{\"betCount\":1,\"betResult\":-1,\"seriesType\":1,\"seriesValue\":\"\\u5355\\u5173\",\"betNo\":null,\"matchId\":null,\"handiCap\":null,\"matchName\":null,\"matchInfo\":null,\"matchType\":null,\"sportId\":null,\"sportName\":null,\"tournamentId\":null,\"marketValue\":null,\"marketType\":null,\"beginTime\":null},\"betRecordList\":[{\"commonProp\":{\"id\":null,\"gameTypeId\":null,\"gameTypeName\":null,\"roundId\":null,\"roundNo\":null,\"tableCode\":null,\"platformName\":null,\"platformId\":null,\"seriesId\":null,\"seriesName\":null,\"betAmount\":\"10.0000\",\"validBetAmount\":null,\"netAmount\":null,\"pumpingAmount\":null,\"payAmount\":null,\"beforeAmount\":null,\"currency\":null,\"createAt\":null,\"netAt\":null,\"recalcuAt\":null,\"updatedAt\":null,\"matchStartTime\":null,\"cancelAt\":null,\"riskUnlockAt\":null,\"playerName\":null,\"nickName\":null,\"playerId\":null,\"deviceType\":null,\"loginIp\":null,\"agentCode\":null,\"agentId\":null,\"agentName\":null,\"parentAgentId\":null,\"parentAgentCode\":null,\"betStatus\":null,\"orderType\":null,\"cancelStatus\":null,\"cancelType\":null,\"signature\":null,\"tableName\":null,\"isTester\":null,\"playOptionsId\":140541404833505400,\"playOptionName\":\"\\u6d1b\\u6749\\u77f6FC  -0\\\/0.5\",\"oddsValue\":1.84,\"settleScore\":\"\",\"playId\":null,\"playName\":\"\\u5168\\u573a\\u8ba9\\u7403\",\"playLevelId\":null,\"playLevel\":null,\"dataSource\":null},\"zrProp\":null,\"qpProp\":null,\"dyProp\":null,\"cpProp\":null,\"djProp\":null,\"tyProp\":{\"betCount\":null,\"betResult\":\"0\",\"seriesType\":null,\"seriesValue\":null,\"betNo\":43335705957176,\"matchId\":1198139,\"handiCap\":-0.25,\"matchName\":\"\\u7f8e\\u56fd\\u804c\\u4e1a\\u5927\\u8054\\u76df\",\"matchInfo\":\"\\u6d1b\\u6749\\u77f6FC v \\u5723\\u4f55\\u585e\\u5730\\u9707\",\"matchType\":2,\"sportId\":1,\"sportName\":\"\\u8db3\\u7403\",\"tournamentId\":563,\"marketValue\":\"-0\\\/0.5\",\"marketType\":\"EU\",\"beginTime\":1634412600000},\"betRecordList\":null,\"imsbProp\":null,\"aeLotteryProp\":null,\"ebetProp\":null,\"ppsmProp\":null,\"ppcasnio\":null}],\"imsbProp\":null,\"aeLotteryProp\":null,\"ebetProp\":null,\"ppsmProp\":null,\"ppcasnio\":null}"}]
+			}
+		}
+
+游戏API对接 | 额度转换转入
+post
+
+http://api.xxx.com/ley/deposit
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：AG,BBIN
+username 	String 	
+
+注册时会员账号
+amount 	Integer 	
+
+转账金额，只接受整数
+transferno 	String 	
+
+转账订单号，建议时间戳+随机数字，最小16位，最大32位
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+	          "deposit":20
+          },
+      }
+
+游戏API对接 | 额度转换转出
+post
+
+http://api.xxx.com/ley/withdrawal
+
+参数
+字段 	类型 	描述
+account 	String 	
+
+商户账号
+api_key 	String 	
+
+商户密钥
+api_code 	String 	
+
+接口标识：AG,BBIN
+username 	String 	
+
+注册时会员账号
+amount 	Integer 	
+
+转账金额，只接受整数
+transferno 	String 	
+
+转账订单号，建议时间戳+随机数字，最小16位，最大32位
+Success 200
+字段 	类型 	描述
+Code 	Integer 	
+
+返回信息码 0 表示请求成功,其他均为失败
+Message 	String 	
+
+返回说明信息
+Data 	Array 	
+
+当Code等于0时才会返回此字段
+
+    请求成功示例
+    请求失败示例
+
+   HTTP/1.1 200 OK
+     {
+       "Code": 0,
+       "Message": "成功",
+       "Data": {
+	          "withdrawal":20
+          },
+      }
+
+API 调用规则
+
+gameType = 游戏类型：1真人,2捕鱼,3电子,4彩票,5体育,6棋牌,7电竞
+
+gameCode = 游戏分类：部分游戏 0 为大厅
+代码 	名称 	说明
+AG 	AG视讯 	真人 ：gameType = 1 , gameCode = 0
+
+电子：gameType = 3 , gameCode = 请参考 获取游戏列表 gameCode 字段
+BBIN 	BBIN视讯 	真人 ：gameType = 1 , gameCode = 0
+
+电子：gameType = 3 , gameCode = 0
+
+彩票：gameType = 4 , gameCode = 0
+
+体育：gameType = 5 , gameCode = 0
+YB 	YB视讯 	gameType = 1 , gameCode = 0
+WM 	完美视讯 	gameType = 1 , gameCode = 0
+AB 	欧博视讯 	gameType = 1 , gameCode = 0
+OB 	OB游戏 	真人 ：gameType = 1 , gameCode = 0
+
+电子：gameType = 3 , gameCode = 请参考 获取游戏列表 gameCode 字段
+
+体育：gameType = 5 , gameCode = 0
+
+棋牌：gameType = 6 , gameCode = 0
+
+电竞：gameType = 7 , gameCode = 0
+XGLIVE 	XG视讯 	gameType = 1 , gameCode = 0
+BG 	BG视讯 	gameType = 1 , gameCode = 0
+DG 	DG视讯 	gameType = 1 , gameCode = 0
+EVO 	EVO视讯 	gameType = 1 , gameCode = 0
+SEXY 	SEXY视讯 	gameType = 1 , gameCode = 0
+TTG 	TTG电子 	gameType = 3 , gameCode = 0
+KA 	KA电子 	维护中
+AT 	AT电子 	gameType = 3 , gameCode = 请参考 获取游戏列表 gameCode 字段
+JOKER 	JOKER电子 	维护中
+PG 	PG电子 	gameType = 3 , gameCode = 0
+PP 	PP电子 	gameType = 3 , gameCode = 0
+ISB 	ISB电子 	gameType = 3 , gameCode = 0
+JDB 	JDB电子 	gameType = 3 , gameCode = 0
+CQ9 	CQ9电子 	gameType = 3 , gameCode = 0
+PNG 	PNG电子 	gameType = 3 , gameCode = 0
+RTG 	RTG电子 	gameType = 3 , gameCode = 0
+GSS 	GSS电子 	gameType = 3 , gameCode = 0
+PT 	PT电子 	gameType = 3 , gameCode = 0
+MG 	MG电子 	gameType = 3 , gameCode = 0
+TCG 	天成彩票 	gameType = 4 , gameCode = 0
+VR 	VR彩票 	gameType = 4 , gameCode = 0
+OBCP 	OB彩票 	gameType = 4 , gameCode = 0
+SBO 	SBO体育 	gameType = 5 , gameCode = 0
+IBC 	沙巴体育 	gameType = 5 , gameCode = 0
+SS 	三晟体育 	gameType = 5 , gameCode = 0
+AGTY 	AG体育 	gameType = 5 , gameCode = 0
+FB 	FB体育 	gameType = 5 , gameCode = 0
+CMD 	CMD体育 	gameType = 5 , gameCode = 0
+XJ 	小金体育 	gameType = 5 , gameCode = 0
+HG 	皇冠体育 	gameType = 5 , gameCode = 0
+NEWBB 	NEWBB体育 	体育：gameType = 5 , gameCode = 0
+
+数位趋势：gameType = 5 , gameCode = 134001
+KY 	开元棋牌 	gameType = 6 , gameCode = 0
+GMFX 	福星棋牌 	已下架
+GDQ 	高登棋牌 	gameType = 6 , gameCode = 0
+BL 	博乐棋牌 	gameType = 6 , gameCode = 请参考 获取游戏列表 gameCode 字段
+TH 	天豪棋牌 	gameType = 6 , gameCode = 0
+LEG 	乐游棋牌 	gameType = 6 , gameCode = 0
+KX 	凯旋棋牌 	gameType = 6 , gameCode = 0
+NW 	新世界棋牌 	gameType = 6 , gameCode = 0
+WALI 	瓦力棋牌 	gameType = 6 , gameCode = 0
+LEG 	乐游棋牌 	gameType = 6 , gameCode = 0
+DTQP 	大唐棋牌 	gameType = 6 , gameCode = 0
+BBCARD 	BB棋牌 	gameType = 6 , gameCode = 0
+AP 	AP爱棋牌 	已下架
+IA 	小艾电竞 	gameType = 7 , gameCode = 0
+TFG 	雷火电竞 	gameType = 7 , gameCode = 0
+AVIA 	泛亚电竞 	gameType = 7 , gameCode = 0
+捕鱼游戏类
+代码 	名称 	说明
+BBIN 	捕鱼大厅 	gameType = 2 , gameCode = 0
+OB 	欢乐捕鱼王 	gameType = 2 , gameCode = 200
+OB 	海王捕鱼 	gameType = 6 , gameCode = 200
+KY 	红包捕鱼 	gameType = 2 , gameCode = 510
+KY 	李逵捕鱼 	gameType = 2 , gameCode = 520
+AT 	龙珠捕鱼 	gameType = 2 , gameCode = cmf0001
+AT 	中国神魔捕鱼 	gameType = 2 , gameCode = cmf0002
+CQ9 	皇金渔场 	gameType = 2 , gameCode = cq9-AB3
+CQ9 	欢乐捕鱼 	gameType = 2 , gameCode = cq9-AT05
+CQ9 	一炮捕鱼 	gameType = 2 , gameCode = cq9-AT01
+JDB 	龙王捕鱼 	gameType = 2 , gameCode = 7_7001
+JDB 	龙王捕鱼2 	gameType = 2 , gameCode = 7_7002
+JDB 	财神捕鱼 	gameType = 2 , gameCode = 7_7003
+JDB 	五龙捕鱼 	gameType = 2 , gameCode = 7_7004
+JDB 	捕鱼一路发 	gameType = 2 , gameCode = 7_7005
+JDB 	猎龙高手 	gameType = 2 , gameCode = 7_7006
+JDB 	捕鱼迪斯可 	gameType = 2 , gameCode = 7_7007
+LEG 	捕鱼大作战 	gameType = 2 , gameCode = 510
+AP 	李逵劈鱼
+海王捕鱼
+大圣闹海
+金蟾捕鱼
+金龙捕鱼
+暂不支持捕鱼直连 	gameType = 6 , gameCode = 0
+TH 	财神捕鱼
+金蟾捕鱼
+大闹天宫1
+大闹天宫2
+李逵劈鱼
+大圣捕鱼
+寻龙夺宝
+金蟾海王2
+  3D捕鱼
+捕鸟达人
+捕鱼大乱斗
+西游捕鱼
+暂不支持捕鱼直连

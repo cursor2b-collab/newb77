@@ -1,0 +1,1430 @@
+集成API规范
+最新更新： 2025年3月
+API版本： 2.15.2
+版本控制
+日期 版本 变更描述
+2025/01/20 2.10 添加分离钱包
+2025/01/21 2.11 在交易回调和投注历史中添加游戏名称字段
+2025/02/17 2.12 添加设置用户RTP API
+2025/02/20 2.13 添加获取用户RTP API、重置用户RTP API
+2025/03/14 2.14 添加批量交易API
+2025/03/26 2.15
+添加获取投注历史V2（按日期）
+弃用获取投注历史（按日期）
+2025/03/28 2.15.1
+新功能
+- 添加获取投注详情页面URL
+- 添加速率限制（1.4 速率限制策略）
+弃用功能
+- 获取投注历史（按日期）
+2025/04/02 2.15.2
+新功能
+- 添加设置用户RTP（批量）
+I. API概述
+介绍供应商 - 前沿的真人娱乐场、老虎机和迷你游戏API提供商
+在一个将彻底改变在线游戏行业的突破性举措中，供应商正式推出了其备受期待的真人娱乐场、老虎机和迷你游戏API平台。这个最先进的
+解决方案承诺为玩家和运营商提供无与伦比的游戏体验。
+以创新和卓越为核心设计，供应商提供了一套全面的产品，满足现代游戏市场的多样化需求。从沉浸式的真人娱乐场体验到刺激的老虎机游
+戏和引人入胜的迷你游戏，该平台经过精心打造，为用户提供无缝且引人入胜的旅程。
+1.1 无缝钱包API
+运营商应在其端提供无缝钱包集成API。当玩家下注或获胜时，供应商将调用这些方法，其余额应相应更新。
+方法/部分 描述 状态
+Balance 返回玩家的余额 必需
+Transaction 使用此方法，供应商系统将通知娱乐场运营商有关游戏交易，如下注、获胜 必需
+1.2 余额转账API
+运营商可以使用此API进行游戏开启并将资金转入供应商系统中玩家的余额。
+方法/部分 描述 状态
+CreateUser 此方法允许在供应商端注册新玩家 必需
+Balance 返回玩家的余额 必需
+Deposit 此方法将资金转入玩家余额 必需
+Withdraw 此方法将资金从供应商系统内的玩家余额中转出 必需
+WithdrawAll 此方法将资金从供应商系统内玩家的所有余额中转出 必需
+1.3 API状态
+请求路径： GET https://dcyqv8f2id.com/api/v2/status
+这是获取API当前状态信息的方法。如果一切正常，您将收到"OK"消息。否则，您会看到一些错误。
+HTTP请求示例：
+GET /api/v2/status HTTP/2
+Host: xxx.com
+JSON响应示例：
+{
+"success": true,
+"message": "success",
+"errorCode": 0
+}
+1.4 API速率限制策略
+为确保公平使用并防止滥用，我们的API对每个端点强制执行速率限制。每个API端点都有自己的限制，在特定时间段后重置。如果用户超过
+限制，API将返回429 Too Many Requests错误，进一步的请求必须等待直到重置期。
+速率限制通过响应头传达：
+X-RateLimit-Limit - 在时间窗口内允许的最大请求数
+X-RateLimit-Remaining - 在达到限制之前剩余的请求数
+X-RateLimit-Reset - 限制重置的Unix时间戳
+每个端点的速率限制：
+端点 限制 时间窗口
+POST /auth/createtoken 5 30秒
+POST /betting/history/by-date-v2 1 1秒
+POST /game/users/batch-rtp 1 3秒
+II. 集成API
+这是一个简单的API，供娱乐场运营商从供应商系统检索一些数据并向供应商发送一些事件。API是一个HTTP监听器，监听发送到具有以下
+请求映射的URL的POST请求。所有响应都是JSON格式。
+HTTP服务的URL将由供应商为生产和测试环境提供，看起来像：
+https://dcyqv8f2id.com/api/v2
+集成简单HTTP服务是安全保护的，因此请确保：
+玩家的浏览器（终端）不得用作向服务发起请求的发起者
+向供应商提供适当的IP进行白名单
+2.1 创建令牌
+使用此方法，娱乐场运营商将获得身份验证承载令牌。此API允许每30秒最多5个请求。超过此限制可能导致临时限制或请求拒绝。
+注意： 过多的令牌生成请求可能导致账户被阻止。
+请求路径： POST /auth/createtoken
+请求参数：
+名称 类型 描述 状态
+clientId string 这是供应商代理clientId，您可以在代理页面找到 必需
+clientSecret string 这是供应商代理clientSecret，您可以在代理页面找到 必需
+响应参数：
+名称 类型 描述
+token string(250) 这是用于请求承载令牌的供应商令牌
+expiration long 这是此令牌的过期时间戳（秒）
+HTTP请求示例：
+POST /api/v2/auth/createtoken HTTP/2
+Host: xxx.com
+content-type: application/json
+accept: */*
+请求体：
+{
+"clientId": "testId",
+"clientSecret": "testSecret"
+}
+JSON响应示例：
+{
+"token": "eyJhbGciOiJIUzUxMiI………..SlDhiXdB2y5Q",
+"expiration": 1716257131
+}
+2.2 供应商列表
+使用此方法，娱乐场运营商将获得可用于集成的游戏提供商列表。
+请求路径： GET /vendors/list
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message List of Vendor 供应商列表（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：Vendor
+名称 类型 描述
+vendorCode string 供应商提供的供应商符号唯一标识符
+type int
+供应商的游戏指示器
+1: 真人娱乐场 2: 老虎机 3: 迷你游戏
+name string 供应商提供的供应商名称
+url string 供应商API端点
+HTTP请求示例：
+GET /api/v2/vendors/list HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+JSON响应示例：
+{
+"success": true,
+"message": [
+{
+"vendorCode": "slot-pragmatic",
+"type": 2,
+"name": "Pragmatic Slot"
+},
+{
+"vendorCode": "mini-crash",
+"type": 3,
+"name": "Crash"
+},
+{
+"vendorCode": "slot-habanero",
+"type": 2,
+"name": "Habanero"
+}
+],
+"errorCode": 0
+}
+2.3 游戏列表
+使用此方法，娱乐场运营商将获得可用于集成的娱乐场游戏列表。
+请求路径： POST /games/list
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 必需
+language string 语言代码。例如：en, th,… 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message List of Game 游戏列表（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：Game
+名称 类型 描述
+provider string 供应商提供的游戏提供商名称
+vendorCode string 供应商提供的供应商符号唯一标识符
+gameId string
+供应商提供的游戏ID（可选）
+（此参数仅适用于特定的老虎机游戏。如果是空字符串，可以忽略）
+gameCode string 供应商提供的游戏符号唯一标识符
+gameName string 供应商提供的游戏名称
+slug string 供应商提供的游戏slug
+thumbnail string 游戏缩略图URL
+updatedAt string 游戏更新日期时间
+isNew boolean 如果游戏是新的则为true，否则为false
+underMaintenance boolean 如果游戏正在维护则为false，否则为false
+HTTP请求示例：
+POST /api/v2/games/list HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "casino-evolution",
+"language": "en"
+}
+JSON响应示例：
+{
+"success": true,
+"message": [
+{
+"provider": "Evolution",
+"vendorCode": "casino-evolution",
+"gameId": "",
+"gameCode": "lobby",
+"gameName": "Lobby",
+"slug": "evolution-lobby",
+"thumbnail": "https://www.evolution.com/wp-content/uploads/2022/01/b2c_b2b_dual_play_pid_5.jpg",
+"updatedAt": "2024-05-20T10:36:40.9800688Z",
+"isNew": false,
+"underMaintenance": false
+},
+{
+"provider": "Evolution",
+"vendorCode": "casino-evolution",
+"gameId": "",
+"gameCode": "LightningDice001",
+"gameName": "Lightning Dice",
+"slug": "evolution-lightningdice",
+"thumbnail": "https://www.evolution.com/wp-content/uploads/2022/01/lightning_dice_pid_10.jpg",
+"updatedAt": "2024-01-10T01:18:18.043",
+"isNew": false,
+"underMaintenance": false
+}
+],
+"errorCode": 0
+}
+2.4 迷你游戏列表
+使用此方法，娱乐场运营商将获得供应商制作的迷你游戏列表，可用于集成。
+请求路径： GET /games/mini/list
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message List of Game 游戏列表（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：Game
+名称 类型 描述
+provider string 供应商提供的游戏提供商名称
+vendorCode string 供应商提供的供应商符号唯一标识符
+gameId string
+供应商提供的游戏ID（可选）
+（此参数仅适用于特定的老虎机游戏。如果是空字符串，可以忽略）
+gameCode string 供应商提供的游戏符号唯一标识符
+gameName string 供应商提供的游戏名称
+slug string 供应商提供的游戏slug
+thumbnail string 游戏缩略图URL
+isNew boolean 如果游戏是新的则为true，否则为false
+underMaintenance boolean 如果游戏正在维护则为false，否则为false
+HTTP请求示例：
+GET /api/v2/games/mini/list HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+JSON响应示例：
+{
+"message": [
+{
+"provider": "Vendor",
+"vendorCode": "mini-crash",
+"gameId": "",
+"gameCode": "mini-crash",
+"gameName": "Crash",
+"slug": "crash",
+"thumbnail": "https://fairvsgames.com/images/Vendor-original/crash.png",
+"isNew": false,
+"underMaintenance": false
+},
+{
+"provider": "Vendor",
+"vendorCode": "mini-keno",
+"gameId": "",
+"gameCode": "mini-keno",
+"gameName": "Keno",
+"slug": "keno",
+"thumbnail": "https://fairvsgames.com/images/Vendor-original/keno.png",
+"isNew": false,
+"underMaintenance": false
+}
+],
+"errorCode": 0,
+"success": true
+}
+2.5 游戏详情
+使用此方法，娱乐场运营商将获得可用于集成的游戏详情。
+请求路径： POST /game/detail
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 必需
+gameCode string 供应商提供的游戏符号唯一标识符 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message Game 游戏详情（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：Game
+名称 类型 描述
+provider string 供应商提供的游戏提供商名称
+vendorCode string 供应商提供的供应商符号唯一标识符
+gameId string
+供应商提供的游戏ID（可选）
+（此参数仅适用于特定的老虎机游戏。如果是空字符串，可以忽略）
+gameCode string 供应商提供的游戏符号唯一标识符
+gameName string 供应商提供的游戏名称
+slug string 供应商提供的游戏slug
+thumbnail string 游戏缩略图URL
+updatedAt string 游戏更新日期时间
+isNew boolean 如果游戏是新的则为true，否则为false
+underMaintenance boolean 如果游戏正在维护则为false，否则为false
+HTTP请求示例：
+POST /api/v2/game/detail HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "casino-evolution",
+"gameCode": "MonBigBaller0001"
+}
+JSON响应示例：
+{
+"success": true,
+"message": {
+"provider": "Evolution",
+"vendorCode": "casino-evolution",
+"gameId": "",
+"gameCode": "MonBigBaller0001",
+"gameName": "MONOPOLY Big Baller",
+"slug": "evolution-monopolybigballer",
+"thumbnail": "https://www.evolution.com/wpcontent/uploads/2022/11/monopoly_big_baller_square_thumbnail_700x700_2022_07_01.jpg",
+"updatedAt": "2024-05-20T13:25:40.2246897Z",
+"isNew": false,
+"underMaintenance": false
+},
+"errorCode": 0
+}
+2.6 获取启动URL
+使用此方法，娱乐场运营商将获得游戏的启动URL。
+请求路径： POST /game/launch-url
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 必需
+gameCode string 供应商提供的游戏符号唯一标识符 必需
+userCode string
+娱乐场运营商提供的用户符号唯一标识
+符
+必需
+language string 语言代码。例如：en, th,… 必需
+lobbyUrl string 游戏网站的大厅URL
+可选
+当某些游戏提供商关闭游戏时需要重定向。例如：Hacksaw老虎机
+游戏
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message string 这是游戏的启动URL
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/game/launch-url HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "casino-evolution",
+"gameCode": "MonBigBaller0001",
+"userCode": "test",
+"language": "en",
+"lobbyUrl": "https://test.com"
+}
+JSON响应示例：
+{
+"success": true,
+"message": "https://evolution.dcyqv8f2id.com/entry?jsessionid=72fa9603a8ef26381a112d86&lang=en&table=MonBigBaller0001",
+"errorCode": 0
+}
+2.7 获取投注历史（按日期）（已弃用）
+使用此方法，娱乐场运营商将获得按日期的投注历史列表（每页最多2000条记录）。可以获取最多7天前的历史记录。目前从startDate到
+endDate的最大时间跨度是8小时。
+请求路径： POST /betting/history/by-date
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 可选
+startDate string
+历史记录的开始日期时间（UTC+0时间）
+例如："yyyy-mm-dd"或"yyyy-mm-ddThh:mm:ss" 必需
+endDate string
+历史记录的结束日期时间（UTC+0时间）
+例如："yyyy-mm-dd"或"yyyy-mm-ddThh:mm:ss" 必需
+page int 投注历史的页码 必需
+perPage int 每页的历史记录数（最多2000） 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message HistoryResponse 历史响应（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：HistoryResponse
+名称 类型 描述
+total int 历史记录总数
+currentPage int 当前页码
+perPage int 每页返回的历史记录数
+histories List of History 历史记录列表（见下面的数据类型描述）
+类型：History
+名称 类型 描述
+id int 供应商的历史记录ID
+userCode string 娱乐场运营商提供的用户符号唯一标识符
+roundId string 游戏历史记录的轮次ID
+gameCode string 供应商提供的游戏符号唯一标识符
+vendorCode string 供应商提供的供应商符号唯一标识符
+betAmount decimal 投注金额。例如：'1.00'
+winAmount decimal 获胜金额。例如：'1.00'
+beforeBalance decimal 投注前余额
+afterBalance decimal 投注后余额
+detail string 投注详情
+status int
+投注状态
+0: 未完成, 1: 已完成, 2: 已取消
+createdAt timestamp 投注创建时间
+updatedAt timestamp 投注更新时间
+HTTP请求示例：
+POST /api/v2/betting/history/by-date HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "slot-pgsoft",
+"startDate": "2024-05-10T01:00:00",
+"endDate": "2024-05-10T09:00:00",
+"page": 1,
+"perPage": 2000
+}
+JSON响应示例：
+{
+"success": true,
+"errorCode": 0,
+"message": {
+"total": 747,
+"currentPage": 1,
+"perPage": 2000,
+"startDate": "2024-04-22T05:28:05",
+"endDate": "2024-04-22T13:28:05",
+"histories": [
+{
+"id": 4,
+"userCode": "testuser",
+"roundId": "1713765639102",
+"gameCode": "vswaysmorient",
+"vendorCode": "mini-crash",
+"betAmount": 100.00,
+"winAmount": 76.00,
+"beforeBalance": 1000000.00,
+"afterBalance": 999976.00,
+"detail": "",
+"status": 1,
+"createdAt": 1713736839,
+"updatedAt": 1713736839
+},
+{
+"id": 750,
+"userCode": "testuser",
+"roundId": "1713766466898",
+"gameCode": "vs10txbigbass",
+"vendorCode": "slot-pragmatic",
+"betAmount": 50.00,
+"winAmount": 10.00,
+"beforeBalance": 996287.00,
+"afterBalance": 996247.00,
+"detail": "",
+"status": 1,
+"createdAt": 1713737666,
+"updatedAt": 1713737667
+}
+]
+}
+}
+2.8 获取投注历史（按ID）
+使用此方法，娱乐场运营商将获得按ID的投注历史详情。
+请求路径： POST /betting/history/by-id
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+id int 历史记录ID 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message History 历史记录详情（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：History
+名称 类型 描述
+id int 供应商的历史记录ID
+userCode string 娱乐场运营商提供的用户符号唯一标识符
+roundId string 游戏历史记录的轮次ID
+gameCode string 供应商提供的游戏符号唯一标识符
+gameName string 游戏名称
+vendorCode string 供应商提供的供应商符号唯一标识符
+betAmount decimal 投注金额。例如：'1.00'
+winAmount decimal 获胜金额。例如：'1.00'
+beforeBalance decimal 投注前余额
+afterBalance decimal 投注后余额
+detail string 投注详情
+status int
+投注状态
+0: 未完成, 1: 已完成, 2: 已取消
+createdAt timestamp 投注创建时间
+updatedAt timestamp 投注更新时间
+HTTP请求示例：
+POST /api/v2/betting/history/by-id HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"id": 5
+}
+JSON响应示例：
+{
+"success": true,
+"errorCode": 0,
+"message": {
+"id": 5,
+"userCode": "test",
+"roundId": "1713765639547",
+"gameCode": "vswaysmorient",
+"vendorCode": "slot-pragmatic",
+"betAmount": 100.00,
+"winAmount": 0.00,
+"beforeBalance": 999976.00,
+"afterBalance": 999876.00,
+"detail": "",
+"status": 1,
+"createdAt": 1713765639,
+"updatedAt": 1713765639
+}
+}
+2.9 获取交易历史（按ID）
+使用此方法，娱乐场运营商将获得按历史记录ID的交易历史详情。
+请求路径： POST /transaction/history/by-id
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+id int 历史记录ID 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message List of Transaction 历史记录列表（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：Transaction
+名称 类型 描述
+id int 供应商的交易ID
+userCode string 娱乐场运营商提供的用户符号唯一标识符
+roundId string 游戏历史记录的轮次ID
+wagerId int 历史记录ID
+gameCode string 供应商提供的游戏符号唯一标识符
+vendorCode string 供应商提供的供应商符号唯一标识符
+amount decimal 余额变化。例如：'1.00'
+status int 0: 成功, 1: 失败
+isFinished boolean 此值表示轮次是否已结束
+isCanceled boolean 此值表示投注是否已被取消
+beforeBalance decimal 交易前余额
+detail string 交易详情
+createdAt timestamp 投注创建时间
+updatedAt timestamp 投注更新时间
+HTTP请求示例：
+POST /api/v2/transaction/history/by-id HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"id": "99"
+}
+JSON响应示例：
+{
+"success": true,
+"errorCode": 0,
+"message": [
+{
+"id": 5,
+"userCode": "test",
+"roundId": "1713765639547",
+"wagerId": "17",
+"gameCode": "vswaysmorient",
+"vendorCode": "slot-pragmatic",
+"amount": -100.00,
+"status": 0,
+"isFinished": false,
+"isCanceled": false,
+"beforeBalance": 999976.00,
+"detail": "",
+"createdAt": 1713765639,
+"updatedAt": 1713765639
+}
+]
+}
+2.10 获取代理余额
+使用此方法，娱乐场运营商将获得代理余额。
+请求路径： GET /agent/balance
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 用户余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+GET /api/v2/agent/balance HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+JSON响应示例：
+{
+"message": 1000,
+"errorCode": 0,
+"success": true
+}
+2.11 创建用户（转账API）
+使用此方法，娱乐场运营商将为转账方法创建用户。
+请求路径： POST /user/create
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+userCode string 来自娱乐场运营商的userCode 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message string 响应的描述
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/user/create HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"userCode": "testuser1"
+}
+JSON响应示例：
+{
+"success": true,
+"errorCode": 0
+}
+2.12 余额（转账API）
+使用此方法，娱乐场运营商将获得转账方法的玩家余额。
+请求路径： POST /user/balance
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+userCode string 来自娱乐场运营商的userCode 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 玩家的余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/user/balance HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"userCode": "testuser1"
+}
+JSON响应示例：
+{
+"success": true,
+"message": 1000.00,
+"errorCode": 0
+}
+2.13 存款（余额转账API）
+使用此方法，娱乐场运营商将存入玩家余额。
+请求路径： POST /user/deposit
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+userCode string 来自娱乐场运营商的userCode 必需
+balance decimal 要存入的金额 必需
+orderNo string 这是存款的标识符 可选
+vendorCode string
+供应商提供的供应商符号唯一标识符
+（对于分离钱包，此字段应为必需） 可选
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 用户余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/user/deposit HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"userCode": "testuser1",
+"balance": 1000.00,
+"orderNo": "EF232FAD43"
+}
+JSON响应示例：
+{
+"success": true,
+"message": 1000,
+"errorCode": 0
+}
+2.14 提款（余额转账API）
+使用此方法，娱乐场运营商将提取用户余额。
+请求路径： POST /user/withdraw
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+userCode string 来自娱乐场运营商的userCode 必需
+balance decimal 要提取的金额 必需
+orderNo string 这是提款的标识符 可选
+vendorCode string
+供应商提供的供应商符号唯一标识符
+（对于分离钱包，此字段应为必需） 可选
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 用户余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/user/withdraw HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"userCode": "testuser",
+"balance": 1000.00,
+"orderNo": "EF232FAD42"
+}
+JSON响应示例：
+{
+"success": true,
+"message": 1000,
+"errorCode": 0
+}
+2.15 全部提款（余额转账API）
+使用此方法，娱乐场运营商将提取玩家的所有余额。
+请求路径： POST /user/withdraw-all
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+userCode string 来自娱乐场运营商的userCode 必需
+vendorCode string
+供应商提供的供应商符号唯一标识符
+（对于分离钱包，此字段应为必需） 可选
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 提取的余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/user/withdraw-all HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"userCode": "testuser"
+}
+JSON响应示例：
+{
+"success": true,
+"message": 1000,
+"errorCode": 0
+}
+2.16 获取用户余额日志（余额转账API）
+使用此方法，娱乐场运营商将获得用户余额历史记录。
+请求路径： POST /user/balance-history
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+orderNo string 来自娱乐场运营商的orderNo 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message UserBalanceHistory 历史记录详情（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：UserBalanceHistory
+名称 类型 描述
+id int 供应商的交易ID
+userCode string 来自娱乐场运营商的userCode
+amount decimal 请求的余额。例如：'1.00'
+type int 1: 存款, 2: 提款
+agentBeforeBalance decimal 交易前的代理余额
+userBeforeBalance decimal 交易前的用户余额
+HTTP请求示例：
+POST /api/v2/user/balance-history HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"orderNo": "EF232FAD42"
+}
+JSON响应示例：
+{
+"success": true,
+"message": {
+"userCode": "testuser1",
+"amount": 1000.00,
+"agentBeforeBalance": 10197667478346.52,
+"userBeforeBalance": 3000.00,
+"type": 1,
+"createdAt": 1724755309
+},
+"errorCode": 0
+}
+2.17 设置用户RTP
+使用此方法，娱乐场运营商将设置用户的RTP。
+请求路径： POST /game/user/set-rtp
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 必需
+userCode string 来自娱乐场运营商的userCode 必需
+rtp int 30到99之间的数字 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/game/user/set-rtp HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "slot-pragmatic",
+"userCode": "testuser1",
+"rtp": 90
+}
+JSON响应示例：
+{
+"success": true,
+"errorCode": 0
+}
+2.18 获取用户RTP
+使用此方法，娱乐场运营商将获得用户的RTP。
+请求路径： POST /game/user/get-rtp
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 必需
+userCode string 来自娱乐场运营商的userCode 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message int 用户的RTP
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/game/user/get-rtp HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "slot-pragmatic",
+"userCode": "testuser1"
+}
+JSON响应示例：
+{
+"success": true,
+"message": 85,
+"errorCode": 0
+}
+2.19 重置用户RTP
+使用此方法，娱乐场运营商将设置所有用户的RTP。
+请求路径： POST /game/users/reset-rtp
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 必需
+rtp int 您尝试为所有用户设置的RTP 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message int 所有用户的RTP
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/game/users/reset-rtp HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "slot-pragmatic",
+"rtp": 85
+}
+JSON响应示例：
+{
+"success": true,
+"message": 85,
+"errorCode": 0
+}
+2.20 设置用户RTP（批量）
+使用此方法，娱乐场运营商批量设置用户的RTP（最多500个用户）。此API允许每3秒最多一个请求。超过此限制可能导致临时限制或请求
+拒绝。
+请求路径： POST /game/users/batch-rtp
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 必需
+data List of UserRtp 来自娱乐场运营商的用户RTP（最多500个用户） 必需
+类型：UserRtp
+名称 类型 描述
+userCode string 来自娱乐场运营商的userCode
+rtp int 30到99之间的数字
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/game/users/batch-rtp HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "slot-pragmatic",
+"data": [
+{"userCode": "testuser1", "rtp": 90},
+{"userCode": "testuser2", "rtp": 90},
+{"userCode": "testuser3", "rtp": 90}
+]
+}
+JSON响应示例：
+{
+"success": true,
+"errorCode": 0
+}
+2.21 获取投注历史V2（按日期）
+使用此方法，娱乐场运营商将获得按日期的投注历史列表（最多5000条记录）。可以获取最多7天前的历史记录。此API允许每秒最多一个请
+求。超过此限制可能导致临时限制或请求拒绝。
+请求路径： POST /betting/history/by-date-v2
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+vendorCode string 供应商提供的供应商符号唯一标识符 可选
+startDate string
+历史记录的开始日期时间（UTC+0时间）
+例如："yyyy-mm-dd"或"yyyy-mm-ddThh:mm:ss" 必需
+limit int 历史记录数（最多5000） 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message HistoryResponseV2 HistoryResponseV2（见下面的数据类型描述）
+errorCode int 如果请求成功处理则为0，否则为错误代码
+类型：HistoryResponseV2
+名称 类型 描述
+nextStartDate string
+下一个请求的历史记录开始日期时间（UTC+0时间）
+例如："yyyy-mm-dd"或"yyyy-mm-ddThh:mm:ss"
+limit int 请求的历史记录数
+histories List of History 历史记录列表（见下面的数据类型描述）
+类型：History
+名称 类型 描述
+id int 供应商的历史记录ID
+userCode string 娱乐场运营商提供的用户符号唯一标识符
+roundId string 游戏历史记录的轮次ID
+gameCode string 供应商提供的游戏符号唯一标识符
+vendorCode string 供应商提供的供应商符号唯一标识符
+betAmount decimal 投注金额。例如：'1.00'
+winAmount decimal 获胜金额。例如：'1.00'
+beforeBalance decimal 投注前余额
+afterBalance decimal 投注后余额
+detail string 投注详情
+status int
+投注状态
+0: 未完成, 1: 已完成, 2: 已取消
+createdAt timestamp 投注创建时间
+updatedAt timestamp 投注更新时间
+HTTP请求示例：
+POST /api/v2/betting/history/by-date-v2 HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"vendorCode": "slot-pgsoft",
+"startDate": "2024-04-21T01:00:00",
+"limit": 5000
+}
+JSON响应示例：
+{
+"success": true,
+"errorCode": 0,
+"message": {
+"limit": 5000,
+"nextStartDate": "2024-4-21T10:14:27",
+"histories": [
+{
+"id": 4,
+"userCode": "testuser",
+"roundId": "1713765639102",
+"gameCode": "vswaysmorient",
+"vendorCode": "mini-crash",
+"betAmount": 100.00,
+"winAmount": 76.00,
+"beforeBalance": 1000000.00,
+"afterBalance": 999976.00,
+"detail": "",
+"status": 1,
+"createdAt": 1713736839,
+"updatedAt": 1713736839
+},
+{
+"id": 750,
+"userCode": "testuser",
+"roundId": "1713766466898",
+"gameCode": "vs10txbigbass",
+"vendorCode": "slot-pragmatic",
+"betAmount": 50.00,
+"winAmount": 10.00,
+"beforeBalance": 996287.00,
+"afterBalance": 996247.00,
+"detail": "",
+"status": 1,
+"createdAt": 1713737666,
+"updatedAt": 1713737667
+}
+]
+}
+}
+2.22 获取投注详情页面URL
+使用此方法，娱乐场运营商将获得投注的详情页面URL。
+请求路径： POST /betting/history/detail
+请求头：
+名称 类型 描述 状态
+Authorization string
+Bearer {token}
+这里运营商可以使用从createToken请求生成的令牌 必需
+请求参数：
+名称 类型 描述 状态
+id int 供应商的历史记录ID 必需
+language string 语言代码。例如：en, zh,… 可选
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message string 这是投注的详情页面URL
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/v2/betting/history/detail HTTP/2
+Host: xxx.com
+content-type: application/json
+authorization: Bearer eyJhbGciOiJIUzU…..yC9dBS_kwww
+请求体：
+{
+"id": 20000,
+"language": "en"
+}
+JSON响应示例：
+{
+"success": true,
+"message": "https://m32unew6.com/gs2c/gameDetail?
+token=06BBAC92439C373931352CD7273D6C6F979B674171FB18777E73AD2572D01540247CF163&playSessionId=44388079111140&lang=en",
+"errorCode": 0
+}
+III. 无缝钱包API（运营商API）
+运营商应在其端提供无缝钱包集成API。当玩家下注或获胜时，供应商将调用这些方法，其余额应相应更新。
+方法/部分 描述 状态
+Balance 返回玩家的余额 必需
+Transaction 返回玩家的余额 必需
+3.1 余额
+使用此方法，娱乐场运营商将返回用户余额。
+注意： 要生成身份验证头，请查看基本 Auth 标头生成器
+如果网站需要 HTTP Basic Auth 浏览器会显示一个索取用户名和密码的对话框。这用于生成一个 授权 header,然后与每个网络请求一起发送。
+
+使用此工具生成 授权 头。您可以在以编程方式提出请求或设置连续网站监控时发送标头。
+
+用户名
+john@example.com
+密码
+abc123
+⬊ ⬋
+john@example。com:abc123
+⬇
+am9obkblegftcgxllmnvbtphymmxmjm=
+⬇
+授权: 基本am9obkBleGFtcGxlLmNvbTphYmMxMjM=
+基本作者如何工作？
+的 授权 请求标头包含 Base64 编码的用户名和密码,并由冒号分隔。处理请求时,服务器会解码登录详细信息并检查用户是否可以访问请求的内容。
+
+如果 授权 服务器没有以 401 未经授权的状态响应标头,并且 WWW-身份验证:基本 header,它告诉浏览器显示基本的 Auth 对话框。
+
+
+请求路径： POST /api/balance
+请求头：
+名称 类型 描述 状态
+Authorization string Basic {clientId和clientSecret的base64编码，用冒号分隔} 必需
+请求参数：
+名称 类型 描述 状态
+userCode string 来自娱乐场运营商的userCode 必需
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 用户余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/balance HTTP/2
+Host: xxx.com
+authorization: Basic dGVzdE.....WNyZXQ=
+content-type: application/json
+请求体：
+{
+"userCode": "testuser"
+}
+JSON响应示例：
+{
+"success": true,
+"message": 1000,
+"errorCode": 0
+}
+3.2 交易
+使用此方法，供应商系统将通知娱乐场运营商有关游戏交易。
+注意： 要生成身份验证头，请查看此链接：https://www.debugbear.com/basic-auth-header-generator
+请求路径： POST /api/transaction
+请求头：
+名称 类型 描述 状态
+Authorization string Basic {clientId和clientSecret的base64编码，用冒号分隔} 必需
+请求参数：
+名称 类型 描述
+userCode string 来自娱乐场运营商的userCode
+vendorCode string 供应商提供的供应商符号唯一标识符
+gameCode string 供应商提供的棋盘游戏符号唯一标识符
+historyId int
+游戏历史记录ID
+这对游戏历史记录是唯一的
+这用于检查游戏和交易历史
+roundId string
+游戏轮次身份
+这对游戏轮次是唯一的
+gameType int
+游戏类型
+1: 娱乐场, 2: 老虎机, 3: 其他（原创游戏和棋盘游戏）, 4: 捕鱼
+transactionCode string
+这是交易的标识符
+如果这些值是重复的，请使用错误代码'DUPLICATE_TRANSACTION'响应
+isFinished boolean 此值表示轮次是否已结束
+如果您在收到此交易后收到另一个轮次消息，请使用错误代码'INVALID_TRANSACTION'回复
+isCanceled boolean 此值表示投注是否已被取消
+amount decimal
+交易金额
+如果这是投注交易（*旧借方），这变为负数
+如果这是获胜交易（*旧贷方），这变为正数
+detail string 交易描述详情
+createdAt Datetime(utc) 这是交易创建的日期
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 交易后的用户余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/transaction HTTP/2
+Host: xxx.com
+authorization: Basic dGVzdE.....WNyZXQ=
+content-type: application/json
+请求体：
+{
+"userCode": "testuser",
+"vendorCode": "slot-pragmatic",
+"gameCode": "vs20doghouse",
+"historyId": "2228221",
+"roundId": "178482632282",
+"gameType": 2,
+"transactionCode": "a2c333bb67",
+"isFinished": false,
+"isCanceled": false,
+"amount": -1000,
+"detail": "{}",
+"createdAt": "2024-06-15 12:0:0"
+}
+JSON响应示例：
+{
+"success": true,
+"message": 1000,
+"errorCode": 0
+}
+3.3 批量交易
+使用此方法，供应商系统将通知娱乐场运营商有关游戏交易。
+注意： 要生成身份验证头，请查看此链接：https://www.debugbear.com/basic-auth-header-generator
+请求路径： POST /api/batch-transactions
+请求头：
+名称 类型 描述 状态
+Authorization string Basic {clientId和clientSecret的base64编码，用冒号分隔} 必需
+请求参数：
+名称 类型 描述
+userCode string 来自娱乐场运营商的userCode
+transactions List of TransactionRequest TransactionRequest列表（请确认TransactionRequest的数据类型）
+类型：TransactionRequest
+名称 类型 描述
+userCode string 来自娱乐场运营商的userCode
+vendorCode string 供应商提供的供应商符号唯一标识符
+gameCode string 供应商提供的棋盘游戏符号唯一标识符
+historyId int
+游戏历史记录ID
+这对游戏历史记录是唯一的
+这用于检查游戏和交易历史
+roundId string
+游戏轮次身份
+这对游戏轮次是唯一的
+gameType int
+游戏类型
+1: 娱乐场, 2: 老虎机, 3: 其他（原创游戏和棋盘游戏）, 4: 捕鱼
+transactionCode string
+这是交易的标识符
+如果这些值是重复的，请使用错误代码'DUPLICATE_TRANSACTION'响应
+isFinished boolean 此值表示轮次是否已结束
+如果您在收到此交易后收到另一个轮次消息，请使用错误代码'INVALID_TRANSACTION'回复
+isCanceled boolean 此值表示投注是否已被取消
+amount decimal
+交易金额
+如果这是投注交易（*旧借方），这变为负数
+如果这是获胜交易（*旧贷方），这变为正数
+detail string 交易描述详情
+createdAt Datetime(UTC) 这是交易创建的日期
+响应参数：
+名称 类型 描述
+success boolean 如果请求成功处理则为true，否则为false
+message decimal 交易后的用户余额
+errorCode int 如果请求成功处理则为0，否则为错误代码
+HTTP请求示例：
+POST /api/batch-transactions HTTP/2
+Host: xxx.com
+authorization: Basic dGVzdE.....WNyZXQ=
+content-type: application/json
+请求体：
+{
+"userCode": "testuser",
+"transactions": [
+{
+"userCode": "testuser",
+"vendorCode": "slot-pragmatic",
+"gameCode": "vs20doghouse",
+"historyId": "2228221",
+"roundId": "178482632282",
+"gameType": 2,
+"transactionCode": "a2c333bb67",
+"isFinished": false,
+"isCanceled": false,
+"amount": -1000,
+"detail": "{}",
+"createdAt": "2024-06-15 12:0:0"
+},
+{
+"userCode": "testuser",
+"vendorCode": "slot-pragmatic",
+"gameCode": "vs20doghouse",
+"historyId": "2228221",
+"roundId": "178482632282",
+"gameType": 2,
+"transactionCode": "a2c333bb67",
+"isFinished": false,
+"isCanceled": false,
+"amount": -1000,
+"detail": "{}",
+"createdAt": "2024-06-15 12:0:0"
+}
+]
+}
+JSON响应示例：
+{
+"success": true,
+"message": 1000,
+"errorCode": 0
+}
+错误代码
+名称 值 描述
+NO_ERROR 0 无错误
+USER_ALREADY_EXISTS 1 您尝试创建的用户账户已存在于系统中
+USER_DOES_NOT_EXIST 2 无法找到具有提供的凭据或标识符的用户账户
+INSUFFICIENT_AGENT_BALANCE 3 代理没有足够的余额来完成请求的操作或交易
+INSUFFICIENT_USER_BALANCE 4 用户没有足够的余额来完成请求的操作或交易
+NO_BETTING_LOG_EXIST 5 无法找到请求的任何投注或交易日志
+DUPLICATE_TRANSACTION 6 交易代码重复
+INVALID_TRANSACTION 7 此投注已完成
+BALANCE_LOG_DOES_NOT_EXIST 8 用户余额日志不存在
+VENDOR_IS_UNDER_MAINTENANCE 9 供应商正在维护中
+GAME_IS_UNDER_MAINTENANCE 10 游戏正在维护中
+DEPRECATED_ENDPOINT 20 端点已弃用
+BAD_REQUEST 400 发送到系统的请求无效或不完整，无法按预期处理
+UNAUTHORIZED 401 用户或代理没有执行请求的操作或访问请求的资源所需的凭据
+UNKNOWN_SERVER_ERROR 500 服务器上发生了意外或未识别的错误，阻止系统按预期处理请求
+语言代码
+代码 描述
+ar 阿拉伯语
+bg 保加利亚语
+ca 加泰罗尼亚语、瓦伦西亚语
+cs 捷克语
+da 丹麦语
+de 德语
+el 希腊语
+en 英语
+es 西班牙语、卡斯蒂利亚语
+et 爱沙尼亚语
+fi 芬兰语
+fr 法语
+he 希伯来语
+hi 印地语
+hr 克罗地亚语
+hu 匈牙利语
+hy 亚美尼亚语
+id 印尼语
+it 意大利语
+ja 日语
+ka 格鲁吉亚语
+ko 韩语
+lt 立陶宛语
+lv 拉脱维亚语
+mn 蒙古语
+ms 马来语
+nl 荷兰语
+pl 波兰语
+pt 葡萄牙语
+ro 罗马尼亚语
+ru 俄语
+sk 斯洛伐克语
+sl 斯洛文尼亚语
+sq 阿尔巴尼亚语
+sv 瑞典语
+th 泰语
+tr 土耳其语
+代码 描述
+uk 乌克兰语
+vi 越南语
+zh 中文
+货币代码
+货币符号 货币代码 描述
+$ USD 美元
+฿ THB 泰铢
+₹ INR 印度卢比
+₩ KRW 韩元
+JP¥ JPY 日元
+₮ MNT 蒙古图格里克
+R$ BRL 巴西雷亚尔
+CN¥ CNY 人民币
+đ VND 越南盾
+₺ TRY 土耳其里拉
+Rp IDR 印尼盾
+₱ PHP 菲律宾比索
+€ EUR 欧元
+$AR ARS 阿根廷比索
+R ZAR 南非兰特
+DT TND 突尼斯第纳尔
+₦ NGN 尼日利亚奈拉
+S/ PEN 秘鲁索尔
+$U UYU 乌拉圭比索
+Col$ COP 哥伦比亚比索
+Bs BOB 玻利维亚诺
+CLP CLP 智利比索
+Mex$ MXN 墨西哥比索
+RM MYR 马来西亚林吉特
+৳ BDT 孟加拉塔卡
+AU$ AUD 澳元
+K MMK 缅甸元
+₭ LAK 老挝基普
+₲ PYG 巴拉圭瓜拉尼
+NT$ TWD 新台币
+₽ RUB 俄罗斯卢布
+Rs PKR 巴基斯坦卢比
+£ EGP 埃及镑
+Лв UZS 乌兹别克斯坦索姆
