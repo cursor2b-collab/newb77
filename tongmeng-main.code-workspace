@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../MSH-亚新体育/admin"
+		},
+		{
+			"path": "../MSH-亚新体育/wap"
+		},
+		{
+			"path": "C:/Users/alex/Desktop/k8_pc"
+		},
+		{
+			"path": "../../caipiao/nextjs-lottery"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "tongmeng-main"
+	}
+}
