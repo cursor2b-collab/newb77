@@ -1,0 +1,27 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../admin.amjsvip.cc_20260114_111551"
+		},
+		{
+			"path": "../../../stake/stake-vue"
+		},
+		{
+			"path": "../../../admin-merchant"
+		},
+		{
+			"path": "../../../Create Exact Copy"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "tongmeng-main"
+	},
+	"extensions": {
+		"recommendations": [
+			"tomoki1207.pdf"
+		]
+	}
+}
