@@ -81,7 +81,7 @@
           // 后端API地址：https://api.beeb77.net
           // 后端API负责创建和缓存游戏API的token
           // 可以通过环境变量 VITE_BACKEND_URL 自定义后端地址
-          target: process.env.VITE_BACKEND_URL || 'https://api.amjsvip.cc',
+          target: process.env.VITE_BACKEND_URL || 'https://api.b772026.com',
           changeOrigin: true,
           secure: true, // 使用HTTPS
           // 保持 /api 路径，因为后端接口需要 /api 前缀
@@ -99,7 +99,7 @@
             
             proxy.on('error', (err, req, res) => {
               console.error('❌ Vite代理错误:', err.message);
-              const targetUrl = process.env.VITE_BACKEND_URL || 'https://api.amjsvip.cc';
+              const targetUrl = process.env.VITE_BACKEND_URL || 'https://api.b772026.com';
               console.error('💡 提示: 请确保后端API服务器', targetUrl, '可访问');
               console.error('💡 如果后端在其他地址，请设置环境变量 VITE_BACKEND_URL');
             });

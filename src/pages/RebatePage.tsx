@@ -84,10 +84,19 @@ export default function RebatePage() {
         setYesterdayRebate(res.yesterday || 0);
         setTotalRebate(res.total || 0);
         
-        // 如果status是error且有message，显示提示（但不阻止页面显示）
+        // 不显示"未配置反水等级"的错误信息，因为系统反水是配置好的
+        // 如果用户没有反水数据，只是说明当前没有可领取的返利，不是配置问题
+        // 只有当确实是系统错误时才显示错误信息（排除"未配置反水等级"相关错误）
         if (res.status === 'error' && res.message) {
-          console.warn('⚠️ 洗码返利API返回错误:', res.message);
-          setErrorMessage(res.message);
+          const errorMsg = res.message;
+          // 如果错误信息包含"未配置反水"或"反水等级"，不显示（系统反水已配置）
+          if (errorMsg.includes('未配置反水') || errorMsg.includes('反水等级') || errorMsg.includes('fs_level')) {
+            console.log('ℹ️ 系统反水已配置，忽略配置相关错误信息');
+            setErrorMessage('');
+          } else {
+            console.warn('⚠️ 洗码返利API返回错误:', errorMsg);
+            setErrorMessage(errorMsg);
+          }
         } else {
           setErrorMessage('');
         }

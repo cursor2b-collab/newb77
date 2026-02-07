@@ -31,6 +31,8 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ name: '', password: '', code: '', key: '' });
   const [captchaImage, setCaptchaImage] = useState('');
   const [captchaLoading, setCaptchaLoading] = useState(false);
+  const [captchaError, setCaptchaError] = useState(false);
+  const [captchaRetryCount, setCaptchaRetryCount] = useState(0);
   const [error, setError] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const secondImageRef = useRef<HTMLImageElement>(null);
@@ -77,66 +79,122 @@ export default function LoginPage() {
     try {
       const res: any = await getCaptcha();
       
-      // 处理响应可能是字符串的情况（两个JSON拼接：{"lang":"zh_cn"}{"status":"success",...}）
-      // 由于base64图片数据很长，直接解析JSON可能失败，使用正则表达式提取
-      if (typeof res === 'string') {
-        // 使用正则表达式直接从字符串中提取key和img
-        const keyMatch = res.match(/"key"\s*:\s*"([^"]+)"/);
-        const imgMatch = res.match(/"img"\s*:\s*"([^"]+)"/);
-        
-        if (keyMatch && imgMatch) {
-          const captchaKey = keyMatch[1];
-          const img = imgMatch[1];
-          const imageUrl = img.startsWith('data:') ? img : 'data:image/png;base64,' + img;
-          setCaptchaImage(imageUrl);
-          setFormData((prev) => ({ ...prev, key: captchaKey }));
-          setCaptchaLoading(false);
-          return;
-        }
-      }
+      console.log('🔍 验证码API原始响应类型:', typeof res, '长度:', typeof res === 'string' ? res.length : 'N/A');
       
-      // 如果正则提取失败，尝试解析JSON
+      // 处理响应可能是字符串的情况（两个JSON拼接：{"lang":"zh_cn"}{"status":"success",...}）
+      // 由于base64图片数据很长，需要找到最后一个完整的JSON对象
       let responseData = res;
+      
       if (typeof res === 'string') {
-        try {
-          // 找到最后一个 { 的位置
-          const lastOpenBrace = res.lastIndexOf('{');
-          if (lastOpenBrace >= 0) {
-            // 尝试找到匹配的最后一个 }
-            let braceCount = 0;
-            let found = false;
-            for (let i = lastOpenBrace; i < res.length; i++) {
-              if (res[i] === '{') braceCount++;
-              if (res[i] === '}') {
-                braceCount--;
-                if (braceCount === 0) {
-                  const jsonStr = res.substring(lastOpenBrace, i + 1);
-                  responseData = JSON.parse(jsonStr);
-                  found = true;
-                  break;
-                }
+        // 方法1: 从后往前查找最后一个完整的JSON对象（最可靠的方法）
+        let lastOpenBrace = res.lastIndexOf('{');
+        if (lastOpenBrace >= 0) {
+          let braceCount = 0;
+          let endIndex = -1;
+          
+          // 从最后一个 { 开始，向前查找匹配的 }
+          for (let i = lastOpenBrace; i < res.length; i++) {
+            if (res[i] === '{') braceCount++;
+            if (res[i] === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                endIndex = i;
+                break;
               }
             }
-            if (!found) {
-              // 如果找不到匹配的}，尝试解析到字符串末尾
-              const jsonStr = res.substring(lastOpenBrace);
+          }
+          
+          if (endIndex > lastOpenBrace) {
+            const jsonStr = res.substring(lastOpenBrace, endIndex + 1);
+            try {
               responseData = JSON.parse(jsonStr);
+              console.log('✅ 成功解析最后一个JSON对象');
+            } catch (e) {
+              console.warn('⚠️ 解析最后一个JSON对象失败:', e);
+              // 继续尝试其他方法
             }
           }
-        } catch (e) {
-          // JSON解析失败，但已经通过正则提取了，所以这里可以忽略
         }
-      }
-      
-      // 如果 responseData 仍然是字符串，尝试从字符串中提取JSON
-      if (typeof responseData === 'string' && responseData.includes('{')) {
-        try {
-          const lastOpenBrace = responseData.lastIndexOf('{');
-          if (lastOpenBrace >= 0) {
-            responseData = JSON.parse(responseData.substring(lastOpenBrace));
+        
+        // 如果方法1失败，尝试使用改进的正则表达式（支持转义字符）
+        if (typeof responseData === 'string' || !responseData?.data) {
+          // 使用非贪婪匹配，但需要匹配到最后一个引号
+          // 先找到 "img": " 的位置
+          const imgStartPattern = /"img"\s*:\s*"/;
+          const keyStartPattern = /"key"\s*:\s*"/;
+          
+          const imgStartMatch = res.match(imgStartPattern);
+          const keyStartMatch = res.match(keyStartPattern);
+          
+          if (imgStartMatch && keyStartMatch) {
+            const imgStartIndex = imgStartMatch.index! + imgStartMatch[0].length;
+            const keyStartIndex = keyStartMatch.index! + keyStartMatch[0].length;
+            
+            // 从开始位置向后查找，直到找到未转义的引号
+            // 注意：base64数据中可能包含转义字符，需要正确处理
+            const findStringEnd = (str: string, start: number): number => {
+              let i = start;
+              while (i < str.length) {
+                if (str[i] === '"') {
+                  // 检查是否是转义的引号
+                  let backslashCount = 0;
+                  let j = i - 1;
+                  while (j >= start && str[j] === '\\') {
+                    backslashCount++;
+                    j--;
+                  }
+                  // 如果转义字符数量是偶数，说明这个引号是字符串结束符
+                  if (backslashCount % 2 === 0) {
+                    return i;
+                  }
+                }
+                i++;
+              }
+              return -1;
+            };
+            
+            const imgEndIndex = findStringEnd(res, imgStartIndex);
+            const keyEndIndex = findStringEnd(res, keyStartIndex);
+            
+            if (imgEndIndex > imgStartIndex && keyEndIndex > keyStartIndex) {
+              // 提取原始字符串（包含转义字符）
+              let img = res.substring(imgStartIndex, imgEndIndex);
+              let captchaKey = res.substring(keyStartIndex, keyEndIndex);
+              
+              // 处理转义字符：\" -> ", \\ -> \, \/ -> /
+              img = img.replace(/\\(.)/g, (match, char) => {
+                if (char === '"') return '"';
+                if (char === '\\') return '\\';
+                if (char === '/') return '/';
+                return match; // 保留其他转义序列
+              });
+              
+              captchaKey = captchaKey.replace(/\\(.)/g, (match, char) => {
+                if (char === '"') return '"';
+                if (char === '\\') return '\\';
+                return match;
+              });
+              
+              if (img.length >= 100) {
+                const imageUrl = img.startsWith('data:') ? img : 'data:image/png;base64,' + img;
+                console.log('✅ 成功通过字符串提取验证码', { 
+                  imgLength: img.length, 
+                  keyLength: captchaKey.length,
+                  imgPreview: img.substring(0, 50) + '...',
+                  imageUrlLength: imageUrl.length
+                });
+                
+                setCaptchaImage(imageUrl);
+                setFormData((prev) => ({ ...prev, key: captchaKey }));
+                setCaptchaError(false);
+                setCaptchaRetryCount(0);
+                setCaptchaLoading(false);
+                return;
+              } else {
+                console.warn('⚠️ 验证码图片数据过短', { imgLength: img.length });
+              }
+            }
           }
-        } catch (e) {
-          // 忽略解析错误
         }
       }
       
@@ -148,25 +206,80 @@ export default function LoginPage() {
         (responseData.status === 'success' && responseData.data)
       );
       
-      if (isSuccess) {
-        const img = responseData.data.img || responseData.data.image || '';
-        if (img) {
-          const imageUrl = img.startsWith('data:') ? img : 'data:image/png;base64,' + img;
-          setCaptchaImage(imageUrl);
-        } else {
-          setCaptchaImage('');
+      if (isSuccess && responseData.data) {
+        let img = responseData.data.img || responseData.data.image || '';
+        const captchaKey = responseData.data.key || responseData.data.captcha_key || '';
+        
+        // 如果img是字符串，可能需要处理转义字符
+        if (typeof img === 'string') {
+          // 处理可能的转义字符
+          img = img.replace(/\\"/g, '"').replace(/\\\\/g, '\\').replace(/\\\//g, '/');
         }
         
-        const captchaKey = responseData.data.key || responseData.data.captcha_key || '';
-        if (captchaKey) {
+        if (img && img.length >= 100) {
+          // 确保base64数据不包含data:前缀（如果包含则直接使用，否则添加）
+          const imageUrl = img.startsWith('data:') ? img : 'data:image/png;base64,' + img;
+          
+          // 验证base64数据格式（应该只包含base64字符）
+          const base64Data = img.startsWith('data:') ? img.split(',')[1] : img;
+          const base64Regex = /^[A-Za-z0-9+/=]+$/;
+          if (!base64Regex.test(base64Data)) {
+            console.warn('⚠️ 验证码base64数据包含非法字符', { 
+              preview: base64Data.substring(0, 50) 
+            });
+          }
+          
+          console.log('✅ 成功设置验证码', { 
+            imgLength: img.length, 
+            keyLength: captchaKey.length,
+            imageUrlLength: imageUrl.length,
+            base64DataLength: base64Data.length
+          });
+          
+          setCaptchaImage(imageUrl);
           setFormData((prev) => ({ ...prev, key: captchaKey }));
+          setCaptchaError(false);
+          setCaptchaRetryCount(0);
+        } else {
+          console.error('❌ 验证码图片数据无效', { 
+            imgLength: img?.length || 0, 
+            hasImg: !!img,
+            imgType: typeof img,
+            responseData: responseData 
+          });
+          setCaptchaImage('');
+          setCaptchaError(true);
+          throw new Error('验证码图片数据无效或过短');
         }
       } else {
+        console.error('❌ 验证码响应格式错误', { 
+          responseData,
+          isSuccess,
+          hasData: !!responseData?.data
+        });
         setCaptchaImage('');
+        setCaptchaError(true);
+        throw new Error('验证码响应格式错误');
       }
     } catch (err) {
       console.error('获取验证码失败', err);
       setCaptchaImage('');
+      setCaptchaError(true);
+      // 如果重试次数少于2次，自动重试
+      setCaptchaRetryCount(prev => {
+        const newCount = prev + 1;
+        if (newCount < 2) {
+          console.log(`🔄 自动重试获取验证码 (${newCount}/2)`);
+          setTimeout(() => {
+            refreshCaptcha();
+          }, 1000);
+          return newCount;
+        } else {
+          console.error('获取验证码失败，已达到最大重试次数');
+          return newCount;
+        }
+      });
+      return; // 不设置loading为false，因为要重试
     } finally {
       setCaptchaLoading(false);
     }
@@ -211,29 +324,38 @@ export default function LoginPage() {
       const res: any = await login(formData);
       
       // 处理响应可能是字符串的情况（两个JSON拼接：{"lang":"zh_cn"}{"status":"success",...}）
+      // 使用和验证码相同的解析逻辑
       let responseData = res;
       if (typeof res === 'string') {
-        try {
-          // 找到最后一个 { 的位置，然后解析到最后一个 }
-          const lastOpenBrace = res.lastIndexOf('{');
-          if (lastOpenBrace >= 0) {
-            const jsonStr = res.substring(lastOpenBrace);
-            responseData = JSON.parse(jsonStr);
+        // 从后往前查找最后一个完整的JSON对象
+        const lastOpenBrace = res.lastIndexOf('{');
+        if (lastOpenBrace >= 0) {
+          let braceCount = 0;
+          let endIndex = -1;
+          
+          // 从最后一个 { 开始，向前查找匹配的 }
+          for (let i = lastOpenBrace; i < res.length; i++) {
+            if (res[i] === '{') braceCount++;
+            if (res[i] === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                endIndex = i;
+                break;
+              }
+            }
           }
-        } catch (e) {
-          console.error('解析登录响应失败:', e);
-        }
-      }
-      
-      // 如果 responseData 仍然是字符串，尝试从字符串中提取JSON
-      if (typeof responseData === 'string' && responseData.includes('{')) {
-        try {
-          const lastOpenBrace = responseData.lastIndexOf('{');
-          if (lastOpenBrace >= 0) {
-            responseData = JSON.parse(responseData.substring(lastOpenBrace));
+          
+          if (endIndex > lastOpenBrace) {
+            const jsonStr = res.substring(lastOpenBrace, endIndex + 1);
+            try {
+              responseData = JSON.parse(jsonStr);
+              console.log('✅ 成功解析登录响应');
+            } catch (e) {
+              console.error('解析登录响应失败:', e, { 
+                jsonStrPreview: jsonStr.substring(0, 100) 
+              });
+            }
           }
-        } catch (e) {
-          console.error('二次解析登录响应失败:', e);
         }
       }
       
@@ -743,14 +865,38 @@ export default function LoginPage() {
                       console.log('验证码图片被点击');
                       e.preventDefault();
                       e.stopPropagation();
+                      // 重置错误状态和重试计数
+                      setCaptchaError(false);
+                      setCaptchaRetryCount(0);
                       refreshCaptcha(e);
                     }}
                     onError={(e) => {
-                      console.error('验证码图片加载失败，清空图片');
-                      setCaptchaImage('');
+                      console.error('验证码图片加载失败', {
+                        src: captchaImage?.substring(0, 100),
+                        retryCount: captchaRetryCount
+                      });
+                      
+                      // 如果重试次数少于2次，自动重试
+                      if (captchaRetryCount < 2) {
+                        console.log(`🔄 自动重试加载验证码 (${captchaRetryCount + 1}/2)`);
+                        setCaptchaRetryCount(prev => prev + 1);
+                        setCaptchaError(true);
+                        // 延迟500ms后重新获取验证码
+                        setTimeout(() => {
+                          refreshCaptcha();
+                        }, 500);
+                      } else {
+                        // 重试次数用完，显示错误状态，但不清空图片，让用户手动点击刷新
+                        console.error('验证码图片加载失败，已达到最大重试次数，请手动点击刷新');
+                        setCaptchaError(true);
+                        setCaptchaLoading(false);
+                        // 不清空图片，让用户看到有问题的图片可以点击刷新
+                      }
                     }}
                     onLoad={() => {
                       console.log('✅ 验证码图片加载成功');
+                      setCaptchaError(false);
+                      setCaptchaRetryCount(0); // 重置重试计数
                     }}
                     style={{
                       cursor: captchaLoading ? 'wait' : 'pointer',
@@ -763,10 +909,12 @@ export default function LoginPage() {
                       borderRadius: '4px',
                       mixBlendMode: 'screen',
                       pointerEvents: 'auto',
-                      opacity: captchaLoading ? 0.6 : 1,
+                      opacity: captchaLoading ? 0.6 : (captchaError ? 0.5 : 1),
                       transition: 'opacity 0.2s',
                       userSelect: 'none',
-                      display: 'block'
+                      display: 'block',
+                      border: captchaError ? '1px solid #ff4444' : 'none',
+                      boxShadow: captchaError ? '0 0 4px rgba(255, 68, 68, 0.5)' : 'none'
                     }}
                     alt="验证码"
                     title="点击刷新验证码"
