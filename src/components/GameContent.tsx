@@ -439,6 +439,52 @@ export function GameContent() {
           gap: 16px;
         }
 
+        .game-banner-lobby-buttons {
+          position: absolute;
+          top: 140px;
+          left: 16px;
+          right: 16px;
+          display: flex;
+          gap: 8px;
+          z-index: 5;
+        }
+
+        .game-banner-lobby-btn {
+          flex: 1;
+          aspect-ratio: 1;
+          padding: 0;
+          background: transparent;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: transform 0.2s;
+          position: relative;
+          background-size: contain;
+          background-position: center;
+          background-repeat: no-repeat;
+          overflow: hidden;
+        }
+
+        .game-banner-lobby-btn.pg-btn {
+          background-image: url('/images/newimg/4Yk.png');
+        }
+
+        .game-banner-lobby-btn.pp-btn {
+          background-image: url('/images/newimg/wxFb8cJNr.png');
+        }
+
+        .game-banner-lobby-btn.pa-btn {
+          background-image: url('/images/newimg/upDNqS6.png');
+        }
+
+        .game-banner-lobby-btn:active {
+          transform: scale(0.95);
+        }
+
+        .game-banner-lobby-btn > * {
+          display: none;
+        }
+
         .game-banner-title-left {
           display: flex;
           flex-direction: column;
@@ -732,17 +778,9 @@ export function GameContent() {
           cursor: not-allowed;
         }
 
-        .fishing-games-swiper {
-          width: 100%;
-          overflow: visible;
-        }
-
-        .fishing-game-slide {
-          width: auto !important;
-        }
-
         .fishing-games-list {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
           gap: 9px;
           list-style: none;
           margin: 0;
@@ -755,34 +793,36 @@ export function GameContent() {
           border-radius: 12px;
           cursor: pointer;
           transition: transform 0.2s;
-          width: 120px;
-          flex-shrink: 0;
+          width: 100%;
         }
 
         /* 移动端和PC端分别显示 */
         .fishing-games-mobile {
-          display: block;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 9px;
+          width: 100%;
         }
 
         .fishing-games-desktop {
           display: none;
         }
 
+        .fishing-games-nav {
+          display: none; /* 网格布局不需要导航按钮 */
+        }
+
         /* PC端样式：使用网格布局 */
         @media (min-width: 768px) {
           .fishing-games-mobile {
-            display: none; /* PC端隐藏 Swiper */
-          }
-
-          .fishing-games-desktop {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             width: 100%;
           }
 
-          .fishing-games-nav {
-            display: none; /* PC端隐藏导航按钮 */
+          .fishing-games-desktop {
+            display: none;
           }
         }
 
@@ -794,10 +834,8 @@ export function GameContent() {
           width: 100%;
           position: relative;
           border-radius: 12px;
-          min-height: 90px;
-          height: 90px;
           overflow: hidden;
-          background: #1a1f2e;
+          background: transparent;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -805,7 +843,7 @@ export function GameContent() {
 
         .fishing-game-picture {
           width: 100%;
-          height: 100%;
+          height: auto;
           display: block;
           object-fit: contain;
           object-position: center;
@@ -885,6 +923,30 @@ export function GameContent() {
                 alt="游戏大厅装饰"
               />
             </div>
+          </div>
+          {/* 游戏大厅按钮 */}
+          <div className="game-banner-lobby-buttons">
+            <button 
+              className="game-banner-lobby-btn pg-btn"
+              onClick={() => {
+                openGame('PG', 3, '0');
+              }}
+              aria-label="PG游戏大厅"
+            />
+            <button 
+              className="game-banner-lobby-btn pp-btn"
+              onClick={() => {
+                openGame('PP', 3, '0');
+              }}
+              aria-label="PP游戏大厅"
+            />
+            <button 
+              className="game-banner-lobby-btn pa-btn"
+              onClick={() => {
+                openGame('PA', 3, '0');
+              }}
+              aria-label="PA游戏大厅"
+            />
           </div>
           <div className="game-banner-games">
             {bannerGames.map((game, index) => {
@@ -984,75 +1046,30 @@ export function GameContent() {
           {fishingGamesLoading ? (
             <div className="fishing-games-loading">加载中...</div>
           ) : fishingGames.length > 0 ? (
-            <>
-              {/* 移动端：使用 Swiper */}
-              <div className="fishing-games-mobile">
-                <Swiper
-                  modules={[Navigation]}
-                  spaceBetween={9}
-                  slidesPerView="auto"
-                  onSwiper={(swiper) => {
-                    fishingSwiperRef.current = swiper;
+            <div className="fishing-games-mobile">
+              {fishingGames.slice(0, 6).map((game) => (
+                <div 
+                  key={game.id}
+                  className="fishing-game-item"
+                  onClick={() => {
+                    // 使用旧接口启动捕鱼游戏
+                    openGame(game.provider || 'JDB', 3, game.gameCode);
                   }}
-                  className="fishing-games-swiper"
                 >
-                  {fishingGames.map((game) => (
-                    <SwiperSlide key={game.id} className="fishing-game-slide">
-                      <div 
-                        className="fishing-game-item"
-                        onClick={() => {
-                          // 使用旧接口启动捕鱼游戏
-                          openGame(game.provider || 'JDB', 3, game.gameCode);
-                        }}
-                      >
-                        <div className="fishing-game-cover-wrapper">
-                          <img 
-                            src={game.thumbnail || '/images/default-game.png'} 
-                            alt={game.name}
-                            className="fishing-game-picture"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/images/default-game.png';
-                            }}
-                          />
-                          <div className="fishing-game-provider">{game.provider}</div>
-                        </div>
-                        {game.name && (
-                          <div className="fishing-game-name">{game.name}</div>
-                        )}
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </div>
-              {/* PC端：使用网格布局 */}
-              <div className="fishing-games-desktop">
-                {fishingGames.map((game) => (
-                  <div 
-                    key={game.id}
-                    className="fishing-game-item"
-                    onClick={() => {
-                      // 使用旧接口启动捕鱼游戏
-                      openGame(game.provider || 'JDB', 3, game.gameCode);
-                    }}
-                  >
-                    <div className="fishing-game-cover-wrapper">
-                      <img 
-                        src={game.thumbnail || '/images/default-game.png'} 
-                        alt={game.name}
-                        className="fishing-game-picture"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/default-game.png';
-                        }}
-                      />
-                      <div className="fishing-game-provider">{game.provider}</div>
-                    </div>
-                    {game.name && (
-                      <div className="fishing-game-name">{game.name}</div>
-                    )}
+                  <div className="fishing-game-cover-wrapper">
+                    <img 
+                      src={game.thumbnail || '/images/default-game.png'} 
+                      alt={game.name}
+                      className="fishing-game-picture"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/default-game.png';
+                      }}
+                    />
+                    <div className="fishing-game-provider">{game.provider}</div>
                   </div>
-                ))}
-              </div>
-            </>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="fishing-games-empty">暂无捕鱼游戏</div>
           )}
@@ -1075,7 +1092,7 @@ export function GameContent() {
               const platformName = platformMap[firstGame.platformName] || firstGame.platformName.toUpperCase().replace('SLOT-', '');
               openGame(platformName, firstGame.gameType, firstGame.gameCode);
             } else {
-              openGame('PG', 3, 'lobby');
+              openGame('PG', 3, '0');
             }
           }}
         >

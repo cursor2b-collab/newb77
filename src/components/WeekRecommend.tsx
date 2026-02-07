@@ -18,10 +18,11 @@ interface GameData {
 }
 
 export function WeekRecommend() {
-  const swiper = useRef(null); // 创建ref来存储Swiper实例
+  const swiperRef = useRef<any>(null); // 创建ref来存储Swiper实例
   const { gamingList, loading: gamesLoading } = useGames(); // 从 GameContext 获取游戏列表
   const [games, setGames] = useState<GameData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // 从 game_lists 表获取 PG 电子游戏
   useEffect(() => {
@@ -282,6 +283,17 @@ export function WeekRecommend() {
           margin-left: 4px;
           border-radius: 4px;
           background: rgba(199, 218, 255, .0509803922);
+          pointer-events: auto;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        
+        .week-box .pageItem.disabled {
+          pointer-events: none;
+        }
+        
+        .week-box .pageItem img {
+          pointer-events: none;
         }
         .pageModule .pageItem .pageArrow {
           width: 8px;
@@ -313,24 +325,59 @@ export function WeekRecommend() {
           <div className="title-right">
             <div className="extraBtn"> 电游大厅 </div>
             <div className="pageModule">
-              <div className="pageItem swiper-button-prev2 disabled">
-                <img className="pageArrow" src="/images/week/zuo.png"/>
+              <div 
+                className={`pageItem ${currentIndex === 0 ? 'disabled' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('左按钮点击', { swiperRef: swiperRef.current, currentIndex });
+                  if (swiperRef.current && currentIndex > 0) {
+                    swiperRef.current.slidePrev();
+                  }
+                }}
+                style={{ cursor: currentIndex === 0 ? 'not-allowed' : 'pointer', opacity: currentIndex === 0 ? 0.3 : 1 }}
+              >
+                <img className="pageArrow" src="/images/week/zuo.png" alt="上一页"/>
               </div>
-              <div className="pageItem swiper-button-next2" >
-                <img className="pageArrow" src="/images/week/you.png"/>
+              <div 
+                className={`pageItem`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('右按钮点击', { swiperRef: swiperRef.current, currentIndex, slidesCount: swiperRef.current?.slides?.length });
+                  if (swiperRef.current) {
+                    const slidesCount = swiperRef.current.slides?.length || 0;
+                    if (currentIndex < slidesCount - 1) {
+                      swiperRef.current.slideNext();
+                    }
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <img className="pageArrow" src="/images/week/you.png" alt="下一页"/>
               </div>
             </div>
           </div>
         </div>
 
         <Swiper
-            
-            navigation={{ prevEl: '.swiper-button-prev2', nextEl: '.swiper-button-next2' }}
             modules={[Navigation]}
-            
             spaceBetween={50}
             slidesPerView={1}
-            ref={swiper}
+            allowTouchMove={true}
+            onSwiper={(swiper) => {
+              console.log('✅ Swiper 初始化成功', swiper);
+              swiperRef.current = swiper;
+            }}
+            onSlideChange={(swiper) => {
+              console.log('📄 幻灯片切换', { 
+                activeIndex: swiper.activeIndex, 
+                slidesCount: swiper.slides?.length || 0,
+                isBeginning: swiper.isBeginning,
+                isEnd: swiper.isEnd
+              });
+              setCurrentIndex(swiper.activeIndex);
+            }}
           >
           <SwiperSlide>
             <div className="recommend-list2">

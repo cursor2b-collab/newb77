@@ -436,7 +436,7 @@ export default function UserCenterPage() {
                 style={{
                   position: 'absolute',
                   bottom: '27px',
-                  left: '180px',
+                  left: '240px',
                   width: 'auto',
                   height: 'auto',
                   maxWidth: '70px',

@@ -690,19 +690,32 @@ export const getGameUrl = async (params: {
   }
   // ========== 旧接口余额转入逻辑结束 ==========
   
-  const requestParams: any = {
+  // 获取语言参数
+  const lang = localStorage.getItem('ly_lang') || 'zh_cn';
+  
+  // 构建查询参数
+  const queryParams: any = {
     api_code: apiCode,
     gameType: params.gameType,
-    isMobile: params.isMobile || 1
+    isMobile: params.isMobile || 1,
+    lang: lang
   };
   
   // 如果游戏代码存在且不为0，则添加
   if (params.gameCode && params.gameCode !== '0' && params.gameCode !== '') {
-    requestParams.gameCode = params.gameCode;
+    queryParams.gameCode = params.gameCode;
   }
   
+  // 调试日志：打印请求参数
+  console.log('🎮 游戏登录请求参数:', {
+    apiCode,
+    queryParams,
+    fullUrl: `game/login?${new URLSearchParams(queryParams as any).toString()}`
+  });
+  
+  // 使用GET请求，所有参数放在URL查询参数中
   return apiClient.get('game/login', {
-    params: requestParams
+    params: queryParams
   }).then((res: any) => {
     // 处理响应数据，支持多种URL字段名（参考Vue项目的responseTransformers）
     const responseData = res?.data || res || {};
