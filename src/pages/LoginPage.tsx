@@ -362,10 +362,17 @@ export default function LoginPage() {
       // 支持多种响应格式：
       // 1. {code: 200, data: {...}}
       // 2. {status: "success", code: 200, data: {...}}
-      const isSuccess = (responseData && responseData.code === 200) || (responseData && responseData.status === 'success');
+      // 3. {access_token: "...", token_type: "bearer", ...} (直接返回token)
+      const isSuccess = (responseData && responseData.code === 200) || 
+                        (responseData && responseData.status === 'success') ||
+                        (responseData && (responseData.access_token || responseData.api_token));
       
       if (isSuccess) {
-        const token = responseData.data && (responseData.data.api_token || responseData.data.access_token);
+        // 尝试多种方式获取token
+        const token = (responseData.data && (responseData.data.api_token || responseData.data.access_token)) ||
+                      responseData.access_token ||
+                      responseData.api_token;
+        
         if (token) {
           // 保存token（参考Vue实现）
           sessionStorage.setItem('token', token);
