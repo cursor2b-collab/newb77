@@ -551,7 +551,7 @@ export default function GamePage() {
             return;
           }
           
-          const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://api.xpj66666.com/api');
+          const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://api.beeb77.net/api');
           
           // 优先使用新接口（如果有 vendorCode）
           if (vendorCode) {

@@ -14,7 +14,7 @@ const getNewGameApiUrl = () => {
   // 开发环境：使用相对路径，通过 Vite 代理
   // 生产环境：使用完整的后端API URL（因为生产环境可能没有 nginx 代理）
   const apiBaseUrl = import.meta.env.VITE_API_URL || 
-    (import.meta.env.DEV ? '/api' : 'https://api.xpj66666.com/api');
+    (import.meta.env.DEV ? '/api' : 'https://api.beeb77.net/api');
   const gameApiUrl = `${apiBaseUrl}/game-api`;
   return gameApiUrl;
 };

@@ -77,11 +77,10 @@
       // Vite 开发服务器默认支持 SPA 路由（history API fallback）
       proxy: {
         '/api': {
-
-
           // ⚠️ 重要：这里指向后端API服务器
-          // 后端API地址：https://api.xpj66666.com
+          // 后端API地址：https://api.beeb77.net
           // 后端API负责创建和缓存游戏API的token
+          // 可以通过环境变量 VITE_BACKEND_URL 自定义后端地址
           target: process.env.VITE_BACKEND_URL || 'https://api.xpj66666.com',
           changeOrigin: true,
           secure: true, // 使用HTTPS
@@ -92,12 +91,16 @@
               // 设置请求头
               proxyReq.setHeader('X-Forwarded-For', req.socket.remoteAddress || '');
               proxyReq.setHeader('X-Forwarded-Proto', 'https');
-              proxyReq.setHeader('X-Forwarded-Host', 'api.xpj66666.com');
+              const targetHost = process.env.VITE_BACKEND_URL 
+                ? new URL(process.env.VITE_BACKEND_URL).hostname 
+                : 'api.beeb77.net';
+              proxyReq.setHeader('X-Forwarded-Host', targetHost);
             });
             
             proxy.on('error', (err, req, res) => {
               console.error('❌ Vite代理错误:', err.message);
-              console.error('💡 提示: 请确保后端API服务器 https://api.xpj66666.com 可访问');
+              const targetUrl = process.env.VITE_BACKEND_URL || 'https://api.xpj66666.com';
+              console.error('💡 提示: 请确保后端API服务器', targetUrl, '可访问');
               console.error('💡 如果后端在其他地址，请设置环境变量 VITE_BACKEND_URL');
             });
           }

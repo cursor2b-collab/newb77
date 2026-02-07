@@ -6,9 +6,9 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 // API 基础URL - 可通过环境变量配置
 // 开发环境使用相对路径，通过 Vite 代理解决跨域问题
 // 生产环境使用完整 URL
-// 注意：如果环境变量未设置，生产环境默认使用 https://api.xpj66666.com/api
+// 注意：如果环境变量未设置，生产环境默认使用 https://api.beeb77.net/api
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.DEV ? '/api' : 'https://api.xpj66666.com/api');
+  (import.meta.env.DEV ? '/api' : 'https://api.beeb77.net/api');
 
 // console.log('🔧 API配置:', {
 //   VITE_API_URL: import.meta.env.VITE_API_URL,
